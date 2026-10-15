@@ -1,0 +1,33 @@
+name: Wersja testowa – baza danych
+
+# Uruchamiasz ręcznie: GitHub → Actions → „Wersja testowa – baza danych” → Run workflow.
+# Wymaga sekretu repozytorium STAGING_DATABASE_URL (Supabase → Connect → Session pooler, rola postgres).
+on:
+  workflow_dispatch:
+    inputs:
+      akcja:
+        description: "Co zrobić"
+        type: choice
+        default: migracje
+        options:
+          - migracje
+          - migracje i przywrócenie danych testowych
+
+jobs:
+  baza:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: wersja-testowa
+    env:
+      STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sprawdź sekret
+        run: test -n "$STAGING_DATABASE_URL" || (echo "Brak sekretu STAGING_DATABASE_URL" && exit 1)
+      - name: Migracje (supabase db push)
+        run: npx --yes supabase@2 db push --db-url "$STAGING_DATABASE_URL" --include-all
+      - name: Przywróć dane testowe
+        if: ${{ inputs.akcja == 'migracje i przywrócenie danych testowych' }}
+        env:
+          CONFIRM: ostoja-test
+        run: ./scripts/staging-reset.sh

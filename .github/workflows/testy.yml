@@ -1,0 +1,54 @@
+name: Testy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  testy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["54322:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres@127.0.0.1:54322/ostoja
+      SESSION_SECRET: tylko-do-testow-ci-0123456789abcdef0123
+      APP_URL: http://localhost:3100
+      DEMO_MODE: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint i typy
+        run: npm run lint && npx tsc --noEmit
+      - name: Logika (Vitest)
+        run: npm test
+      - name: Baza (RLS, przepływy)
+        run: ./tests/db/run.sh
+      - name: Baza z danymi testowymi
+        run: ./scripts/db-reset.sh
+      - name: Build
+        run: npm run build
+      - name: Przeglądarka do testów E2E
+        run: npx playwright install --with-deps chromium
+      - name: E2E (telefon 390 px i komputer 1280 px)
+        run: npm run e2e
+      - name: Zrzuty ekranu
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zrzuty
+          path: |
+            docs/zrzuty/
+            test-results/
+          retention-days: 14

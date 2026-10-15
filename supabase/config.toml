@@ -1,0 +1,13 @@
+# Minimalna konfiguracja Supabase CLI (db push, start). Lokalnie bez Dockera: scripts/db-reset.sh.
+project_id = "ostoja"
+
+[db]
+major_version = 16
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[auth]
+site_url = "http://localhost:3000"
+enable_signup = false

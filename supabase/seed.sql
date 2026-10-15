@@ -27,7 +27,8 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-4000-8000-000000000002', 'ewa@cisza.test',      '{"name":"Ewa Rogalska"}'),
   ('00000000-0000-4000-8000-000000000003', 'adam@cisza.test',     '{"name":"Adam Sowiński"}'),
   ('00000000-0000-4000-8000-000000000004', 'piotr@podlipami.test','{"name":"Piotr Lipski"}'),
-  ('00000000-0000-4000-8000-000000000005', 'kasia@kalina.test',   '{"name":"Katarzyna Kalinowska"}');
+  ('00000000-0000-4000-8000-000000000005', 'kasia@kalina.test',   '{"name":"Katarzyna Kalinowska"}')
+on conflict (id) do nothing; -- reset wersji testowej zostawia konta w auth.users
 
 insert into funeral_homes (id, slug, name, nip, city_slug, address, phone, email, description,
                            lat, lng, has_farewell_hall, rating, reviews_count, verified_at) values
