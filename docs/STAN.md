@@ -74,8 +74,15 @@ Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, pan
   scripts/supabase/harmonogram-powiadomien.sql.
 
 ## Następne kroki (w tej kolejności)
-1. Postawić wersję testową według docs/poradnik/Ostoja-poradnik-wersji-testowej.docx (Supabase + Vercel, ok. godziny).
-   Z konektorem Supabase Claude może założyć bazę sam.
+1. Wersja testowa – stan:
+   - Supabase (projekt iarvcirfxjlyxpicnxyr, Frankfurt): wszystkie migracje do 800 i dane testowe wgrane (6 zakładów).
+     Doradca bezpieczeństwa: zostały tylko uwagi zamierzone (funkcje strony dla rodzin dla anon, funkcje panelu dla
+     authenticated – każda sprawdza auth.uid()) i „RLS bez polityk” dla tabel dostępnych wyłącznie przez funkcje.
+   - Vercel: konektor nie ma dostępu do zespołu „ostoja”, więc projekt zakłada się ręcznie (vercel.com/new → import
+     Popcol101/Ostoja → wklejenie zmiennych). Bez DATABASE_URL build się nie uda (src/lib/db.ts).
+   - Po pierwszym wdrożeniu: poprawić APP_URL i VAPID_SUBJECT na faktyczny adres, uruchomić
+     scripts/supabase/harmonogram-powiadomien.sql (ten sam CRON_SECRET), w Supabase Auth wyłączyć rejestrację,
+     ustawić Site URL i Redirect URLs na adres aplikacji.
 2. Przejść scenariusze z arkusza z 1–2 zakładami; uwagi do zakładki Spotkania, błędy do zakładki Błędy.
 3. Przegląd prawny: docs/prawne/Ostoja-RODO-i-bezpieczenstwo-szkic.docx, /prywatnosc, /regulamin; umowy DPA z dostawcami.
 4. Do dopracowania: uzasadnienie przy wstrzymaniu zakładu (P2B), procedura naruszeń i realizacji praw osób,
