@@ -1,5 +1,5 @@
 "use client";
-import { CalendarDays, ClipboardList, Inbox, Receipt, Store } from "lucide-react";
+import { CalendarDays, ClipboardList, Inbox, Receipt, Store, Users } from "lucide-react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -8,6 +8,7 @@ const items = [
   { href: "/panel/zlecenia", label: "Zlecenia", icon: ClipboardList, mobile: true },
   { href: "/panel/kalendarz", label: "Kalendarz", icon: CalendarDays, mobile: true },
   { href: "/panel/profil", label: "Profil i cennik", icon: Store, mobile: true },
+  { href: "/panel/zespol", label: "Zespół", icon: Users, mobile: false },
   { href: "/panel/rozliczenia", label: "Rozliczenia", icon: Receipt, mobile: false },
 ];
 

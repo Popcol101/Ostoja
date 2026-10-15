@@ -34,6 +34,7 @@ export default defineConfig({
         DEMO_MODE: "true",
         SUPABASE_URL: "http://127.0.0.1:54399",
         SUPABASE_ANON_KEY: "test-anon-key",
+        SUPABASE_SERVICE_ROLE_KEY: "test-service-key",
         APP_URL: "http://localhost:3100",
         CRON_SECRET: "test-cron-secret-1234567890",
       },

@@ -50,6 +50,20 @@ export const MESSAGES = {
   "brak-zakladu": "To konto nie jest przypisane do żadnego zakładu. Zadzwoń do opiekuna partnerów Ostoi.",
   "demo-wylaczone": "Logowanie kontami testowymi jest wyłączone.",
   "brak-telefonu": "Brak numeru telefonu rodziny w zleceniu.",
+  // Zespół
+  "zaproszenie-utworzone": "Zaproszenie gotowe. Wyślij link tej osobie – działa 7 dni.",
+  "zaproszenie-odwolane": "Zaproszenie odwołane. Link przestał działać.",
+  "dostep-odebrany": "Dostęp odebrany.",
+  "zaproszenie-przyjete-link": "Zaproszenie przyjęte. Wysłaliśmy link logowania na Twój e-mail – działa godzinę.",
+  "witaj": "Witaj w panelu Ostoi.",
+  "konto-blad": "Nie udało się przygotować konta. Zadzwoń do opiekuna partnerów Ostoi.",
+  "tylko-wlasciciel": "Zapraszać może tylko właściciel zakładu",
+  "juz-w-zespole": "Ta osoba ma już dostęp do panelu",
+  "zaproszenie-nieaktywne": "Zaproszenie wygasło albo zostało już użyte",
+  "konto-niepasuje": "Konto nie pasuje do zaproszenia",
+  "brak-zaproszenia": "Nie znaleziono zaproszenia",
+  "nie-siebie": "Nie możesz usunąć własnego dostępu",
+  "brak-osoby": "Nie znaleziono osoby w Twoim zakładzie",
   "blad-zapisu": "Nie udało się zapisać. Spróbuj ponownie albo zadzwoń do opiekuna Ostoi.",
 } as const;
 

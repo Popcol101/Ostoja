@@ -54,8 +54,11 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
         Profil i cennik
       </PageTitle>
       <Flash searchParams={searchParams} />
-      <p className="mb-4 lg:hidden">
-        <Link href="/panel/rozliczenia" className="font-semibold text-brand">
+      <p className="mb-4 flex flex-wrap gap-x-5 gap-y-1 lg:hidden">
+        <Link href="/panel/zespol" className="inline-flex min-h-11 items-center font-semibold text-brand">
+          Zespół
+        </Link>
+        <Link href="/panel/rozliczenia" className="inline-flex min-h-11 items-center font-semibold text-brand">
           Rozliczenia z Ostoją
         </Link>
       </p>
