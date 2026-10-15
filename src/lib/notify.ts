@@ -4,7 +4,7 @@
 // W logach tylko identyfikatory – nigdy telefony, imiona ani nazwiska.
 import "server-only";
 import webpush from "web-push";
-import { sql } from "./db";
+import { asServer } from "./db";
 import { BURIAL_LABEL, CEREMONY_LABEL, type Burial, type Ceremony } from "./labels";
 
 export type Claimed = {
@@ -95,8 +95,8 @@ function vapidReady(): boolean {
 
 async function sendPush(n: Claimed): Promise<Outcome> {
   if (!vapidReady()) return { status: "pominieto", error: "Powiadomienia push wyłączone (brak kluczy VAPID)" };
-  const subs = await sql<{ id: string; endpoint: string; p256dh: string; auth: string }[]>`
-    select id, endpoint, p256dh, auth from push_subscriptions where home_id = ${n.home_id}`;
+  const subs = await asServer((tx) => tx<{ id: string; endpoint: string; p256dh: string; auth: string }[]>`
+    select id, endpoint, p256dh, auth from push_subscriptions where home_id = ${n.home_id}`);
   if (subs.length === 0) return { status: "pominieto", error: "Żadne urządzenie zakładu nie ma włączonych powiadomień" };
 
   const payload = JSON.stringify(pushPayload(n));
@@ -110,11 +110,11 @@ async function sendPush(n: Claimed): Promise<Outcome> {
         topic: "nowe-zapytanie",
       });
       delivered++;
-      await sql`update push_subscriptions set last_used_at = now() where id = ${s.id}`;
+      await asServer((tx) => tx`update push_subscriptions set last_used_at = now() where id = ${s.id}`);
     } catch (e) {
       const status = (e as { statusCode?: number }).statusCode;
       if (status === 404 || status === 410) {
-        await sql`delete from push_subscriptions where id = ${s.id}`; // urządzenie wycofało zgodę
+        await asServer((tx) => tx`delete from push_subscriptions where id = ${s.id}`); // urządzenie wycofało zgodę
       } else {
         lastError = `push ${status ?? "?"}`;
       }
@@ -137,8 +137,10 @@ export type OutboxResult = { wyslano: number; pominieto: number; blad: number };
 /** Wysyła oczekujące powiadomienia. Bezpieczne przy równoległych wywołaniach (rezerwacja w bazie). */
 export async function processOutbox(limit = 50): Promise<OutboxResult> {
   const result: OutboxResult = { wyslano: 0, pominieto: 0, blad: 0 };
-  await sql`select skip_stale_offer_notifications()`;
-  const batch = await sql<Claimed[]>`select * from claim_notifications(${limit})`;
+  const batch = await asServer(async (tx) => {
+    await tx`select skip_stale_offer_notifications()`;
+    return tx<Claimed[]>`select * from claim_notifications(${limit})`;
+  });
   for (const n of batch) {
     let outcome: Outcome;
     try {
@@ -146,7 +148,7 @@ export async function processOutbox(limit = 50): Promise<OutboxResult> {
     } catch (e) {
       outcome = { status: "blad", error: e instanceof Error ? e.message.slice(0, 200) : "nieznany błąd" };
     }
-    await sql`select complete_notification(${n.id}, ${outcome.status}::notification_status, ${outcome.error ?? null})`;
+    await asServer((tx) => tx`select complete_notification(${n.id}, ${outcome.status}::notification_status, ${outcome.error ?? null})`);
     result[outcome.status]++;
     if (outcome.status !== "wyslano") console.info(`[powiadomienia] ${n.id} ${n.channel} → ${outcome.status}: ${outcome.error ?? ""}`);
   }

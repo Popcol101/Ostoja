@@ -9,7 +9,8 @@ const ANNA = "00000000-0000-4000-8000-000000000001";
 const VALID = "a".repeat(56);
 const VALID_NEW = "c".repeat(56);
 const port = Number(process.env.MOCK_SUPABASE_PORT ?? 54399);
-const sql = postgres(process.env.DATABASE_URL ?? "postgresql://postgres@127.0.0.1:54322/ostoja", { max: 2 });
+// Atrapa działa jak GoTrue (właściciel schematu auth), więc łączy się jako postgres – nie przez rolę aplikacji.
+const sql = postgres(process.env.MOCK_DATABASE_URL ?? "postgresql://postgres@127.0.0.1:54322/ostoja", { max: 2 });
 let lastCreated = null;
 
 createServer((req, res) => {

@@ -3,7 +3,7 @@
 import { RedirectType, redirect } from "next/navigation";
 import { z } from "zod";
 import { TOKEN_HASH, authConfig, requestMagicLink, verifyMagicLink } from "@/lib/auth";
-import { sql } from "@/lib/db";
+import { asServer } from "@/lib/db";
 import { withMessage } from "@/lib/messages";
 import { rateLimit } from "@/lib/rate-limit";
 import { createSession, demoModeEnabled } from "@/lib/session";
@@ -12,12 +12,8 @@ const back = (kind: "ok" | "blad", text: string): never => redirect(withMessage(
 
 /** Dokąd wpuścić konto: panel zakładu (członkostwo), panel administratora albo nigdzie. */
 async function destination(userId: string): Promise<"/panel/zapytania" | "/admin" | null> {
-  const [row] = await sql<{ member: boolean; admin: boolean }[]>`
-    select exists (select 1 from memberships where user_id = ${userId}) as member,
-           exists (select 1 from platform_admins where user_id = ${userId}) as admin`;
-  if (row?.member) return "/panel/zapytania";
-  if (row?.admin) return "/admin";
-  return null;
+  const [row] = await asServer((tx) => tx<{ d: string | null }[]>`select login_destination(${userId}) as d`);
+  return row?.d === "panel" ? "/panel/zapytania" : row?.d === "admin" ? "/admin" : null;
 }
 
 const emailSchema = z.object({ email: z.email({ message: "Podaj poprawny e-mail" }).max(200) });
@@ -55,7 +51,7 @@ export async function loginDemo(formData: FormData) {
   if (!demoModeEnabled()) back("blad", "Logowanie kontami testowymi jest wyłączone.");
   const userId = z.guid().parse(formData.get("userId"));
   // Konta testowe to tylko adresy @….test – prawdziwe konta logują się linkiem z e-maila, nawet na wersji testowej.
-  const [u] = await sql<{ email: string }[]>`select email from auth.users where id = ${userId}`;
+  const [u] = await asServer((tx) => tx<{ email: string | null }[]>`select auth_user_email(${userId}) as email`);
   if (!u?.email?.endsWith(".test")) back("blad", "To konto loguje się linkiem z e-maila.");
   const target = await destination(userId);
   if (!target) back("blad", "To konto nie jest przypisane do żadnego zakładu. Zadzwoń do opiekuna partnerów Ostoi.");

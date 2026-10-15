@@ -24,6 +24,33 @@ begin
   assert extra is null, 'anon ma dostęp do: ' || coalesce(extra, '');
 end $$;
 
+-- Rola authenticated (każdy zalogowany przez Supabase Auth, także spoza Ostoi) nie dostaje funkcji tylko dla serwera.
+do $$
+declare extra text;
+begin
+  select string_agg(p.proname, ', ' order by p.proname) into extra
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and has_function_privilege('authenticated', p.oid, 'execute')
+    and p.proname in ('start_inquiry', 'confirm_inquiry', 'resend_inquiry_code', 'draft_info', 'invitation_email',
+                      'accept_invitation', 'create_inquiry', 'hit_rate_limit', 'purge_old_data', 'expire_offers',
+                      'dispatch_offers', 'claim_notifications', 'complete_notification', 'skip_stale_offer_notifications',
+                      'admin_log', 'auth_user_by_email', 'auth_user_email', 'demo_create_auth_user', 'demo_accounts',
+                      'login_destination', 'new_sms_code', 'sms_code_hash');
+  assert extra is null, 'authenticated ma dostęp do funkcji serwera: ' || coalesce(extra, '');
+end $$;
+
+-- Tabele bez polityk nie są dostępne dla ról API.
+do $$
+declare extra text;
+begin
+  select string_agg(c.relname, ', ') into extra
+  from pg_class c join pg_namespace n on n.oid = c.relnamespace
+  where n.nspname = 'public' and c.relkind = 'r'
+    and c.relname in ('invitations', 'platform_admins', 'admin_audit', 'inquiry_drafts', 'rate_limits', 'inquiries')
+    and (has_table_privilege('anon', c.oid, 'select') or has_table_privilege('authenticated', c.oid, 'select'));
+  assert extra is null, 'tabele dostępne dla API: ' || coalesce(extra, '');
+end $$;
+
 set local role anon;
 do $$ begin
   assert (select count(*) from search_homes('lodz', 'kremacja', 'bez')) > 0, 'rodzina nie widzi ofert';

@@ -2,7 +2,7 @@
 // Supabase: konto zakładamy przez Admin API kluczem service_role (SUPABASE_SERVICE_ROLE_KEY – nigdy NEXT_PUBLIC_).
 // Lokalnie i w wersji testowej bez Supabase (DEMO_MODE=true): wiersz w lokalnej nakładce auth.users.
 import { authConfig } from "./auth";
-import { sql } from "./db";
+import { asServer } from "./db";
 
 export type AdminConfig = { url: string; serviceKey: string };
 
@@ -19,7 +19,7 @@ export const INVITE_TOKEN = /^[A-Za-z0-9_-]{40,60}$/;
 export type EnsureResult = { ok: true; userId: string } | { ok: false };
 
 async function findUser(email: string): Promise<string | null> {
-  const [u] = await sql<{ id: string }[]>`select id from auth.users where lower(email) = ${email} limit 1`;
+  const [u] = await asServer((tx) => tx<{ id: string | null }[]>`select auth_user_by_email(${email}) as id`);
   return u?.id ?? null;
 }
 
@@ -53,10 +53,7 @@ export async function ensureAuthUser(
   }
 
   if (opts.demo) {
-    const [u] = await sql<{ id: string }[]>`
-      insert into auth.users (id, email) values (gen_random_uuid(), ${normalized})
-      on conflict (email) do update set email = excluded.email
-      returning id`;
+    const [u] = await asServer((tx) => tx<{ id: string }[]>`select demo_create_auth_user(${normalized}) as id`);
     return { ok: true, userId: u.id };
   }
   return { ok: false };

@@ -17,6 +17,21 @@ end $$;
 
 create schema if not exists auth;
 
+-- Jak w Supabase: rozszerzenia w schemacie extensions, ścieżka wyszukiwania z extensions.
+create schema if not exists extensions;
+create extension if not exists pgcrypto schema extensions;
+grant usage on schema extensions to anon, authenticated, service_role;
+do $$ begin
+  execute format('alter database %I set search_path = "$user", public, extensions', current_database());
+end $$;
+set search_path = "$user", public, extensions;
+
+-- Jak w Supabase: nowe tabele i funkcje w public dostają uprawnienia dla anon, authenticated i service_role.
+-- Dlatego każda migracja musi jawnie odbierać to, czego nie chcemy udostępniać (test 09_hardening to sprawdza).
+alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;
+
 create table if not exists auth.users (
   id                 uuid primary key,
   email              text unique,
@@ -43,4 +58,4 @@ $$;
 
 grant usage on schema auth to anon, authenticated, service_role;
 grant execute on function auth.uid(), auth.role() to anon, authenticated, service_role;
-grant select on auth.users to service_role;
+-- Bez bezpośredniego dostępu do auth.users dla ról API – jak w Supabase. Aplikacja czyta konta przez funkcje security definer.
