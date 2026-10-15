@@ -76,6 +76,14 @@ export const MESSAGES = {
   "nip-zajety": "Zakład z tym NIP-em już jest w Ostoi",
   "brak-zakladu-admin": "Nie znaleziono zakładu",
   "tylko-link": "To konto loguje się linkiem z e-maila.",
+  // Kod SMS
+  "sms-niedostepny": "Nie możemy teraz wysłać kodu SMS. Zadzwoń do opiekuna – pomożemy od razu.",
+  "zly-kod": "Nieprawidłowy kod. Sprawdź SMS i wpisz go jeszcze raz.",
+  "za-duzo-prob": "Za dużo prób. Wypełnij formularz jeszcze raz albo zadzwoń do opiekuna.",
+  "nowy-kod": "Wysłaliśmy nowy kod. Poprzedni przestał działać.",
+  "kody-limit": "Wysłaliśmy już kilka kodów na ten numer. Zadzwoń do opiekuna – pomożemy od razu.",
+  "kod-za-wczesnie": "Nowy kod możesz wysłać po minucie od poprzedniego.",
+  "formularz-wygasl": "Ten formularz wygasł. Wypełnij go jeszcze raz.",
   "blad-zapisu": "Nie udało się zapisać. Spróbuj ponownie albo zadzwoń do opiekuna Ostoi.",
 } as const;
 

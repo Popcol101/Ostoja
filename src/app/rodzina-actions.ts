@@ -1,13 +1,16 @@
 "use server";
 // Akcje strony dla rodzin (bez logowania). Baza: tylko funkcje security definer w roli anon.
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { after } from "next/server";
 import { RedirectType, redirect } from "next/navigation";
 import { z } from "zod";
 import { asAnon, userFacingDbError } from "@/lib/db";
 import { warsawToUtc } from "@/lib/format";
 import { withMessage } from "@/lib/messages";
-import { processOutbox } from "@/lib/notify";
+import { processOutbox, sendSms, smsConfig, smsNumber } from "@/lib/notify";
+import { DEMO_CODE_COOKIE, smsCodeText } from "@/lib/phone";
+import { demoModeEnabled } from "@/lib/session";
 import { rateLimit } from "@/lib/rate-limit";
 
 const inquirySchema = z.object({
@@ -47,9 +50,16 @@ export async function createInquiry(formData: FormData) {
   const d = parsed.data;
   const phone = d.contact_phone.startsWith("+48") ? d.contact_phone : `+48${d.contact_phone}`;
   const formatted = phone.replace(/^\+48(\d{3})(\d{3})(\d{3})$/, "+48 $1 $2 $3");
+  const sms = smsConfig();
+  const demo = demoModeEnabled();
+  if (!sms && !demo) {
+    redirect(withMessage(backTo, "blad", "Nie możemy teraz wysłać kodu SMS. Zadzwoń do opiekuna – pomożemy od razu."), RedirectType.replace);
+  }
+
+  let started: { draft_id: string; code: string } | null = null;
   let error: string | null = null;
   try {
-    await asAnon((tx) => tx`select create_inquiry(${tx.json({
+    [started] = await asAnon((tx) => tx<{ draft_id: string; code: string }[]>`select * from start_inquiry(${tx.json({
       city_slug: d.miasto,
       burial: d.forma,
       ceremony: d.ceremonia,
@@ -64,11 +74,89 @@ export async function createInquiry(formData: FormData) {
     error = userFacingDbError(e);
     if (!error) throw e;
   }
-  if (error) redirect(withMessage(backTo, "blad", error), RedirectType.replace);
+  if (error || !started) redirect(withMessage(backTo, "blad", error ?? "Sprawdź wpisane dane."), RedirectType.replace);
+  await deliverCode(started!.draft_id, started!.code, formatted, backTo);
+  redirect(`/oferty/potwierdz?d=${started!.draft_id}`);
+}
+
+/** Wysyła kod SMS-em; w wersji testowej bez SMSAPI pokazuje go na ekranie (ciasteczko tylko dla tej przeglądarki). */
+async function deliverCode(draftId: string, code: string, phone: string, backTo: string) {
+  const sms = smsConfig();
+  if (sms) {
+    const to = smsNumber(phone);
+    const res = to ? await sendSms(to, smsCodeText(code), sms) : { status: "pominieto" as const };
+    if (res.status !== "wyslano") {
+      redirect(withMessage(backTo, "blad", "Nie możemy teraz wysłać kodu SMS. Zadzwoń do opiekuna – pomożemy od razu."), RedirectType.replace);
+    }
+    return;
+  }
+  (await cookies()).set(DEMO_CODE_COOKIE, JSON.stringify({ d: draftId, c: code }), {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+    path: "/oferty/potwierdz",
+    maxAge: 10 * 60,
+  });
+}
+
+type DraftInfo = {
+  city_slug: string;
+  burial: string;
+  ceremony: string;
+  place_of_death: string;
+  budget: string | null;
+  preferred_home_id: string | null;
+};
+
+const confirmSchema = z.object({
+  d: z.guid(),
+  kod: z.string().transform((v) => v.replace(/\D/g, "")),
+});
+
+export async function confirmInquiry(formData: FormData) {
+  const parsed = confirmSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect("/zapytanie");
+  const { d, kod } = parsed.data!;
+  const here = `/oferty/potwierdz?d=${d}`;
+  if (!(await rateLimit("kod-sms", 20, 15 * 60 * 1000))) redirect(withMessage(here, "blad", "Zbyt wiele prób. Spróbuj za chwilę."), RedirectType.replace);
+
+  const { info, result } = await asAnon(async (tx) => {
+    const [info] = await tx<DraftInfo[]>`select city_slug, burial, ceremony, place_of_death, budget, preferred_home_id from draft_info(${d})`;
+    const [result] = await tx<{ status: string; inquiry_id: string | null; attempts_left: number }[]>`select * from confirm_inquiry(${d}, ${kod})`;
+    return { info, result };
+  });
+  if (result.status === "zly") {
+    redirect(withMessage(here, "blad", result.attempts_left > 0 ? "Nieprawidłowy kod. Sprawdź SMS i wpisz go jeszcze raz." : "Za dużo prób. Wypełnij formularz jeszcze raz albo zadzwoń do opiekuna."), RedirectType.replace);
+  }
+  if (result.status !== "ok" || !info) redirect(here, RedirectType.replace);
+  (await cookies()).delete({ name: DEMO_CODE_COOKIE, path: "/oferty/potwierdz" });
   after(() => processOutbox()); // push do zakładu od razu, bez czekania na harmonogram
   redirect(
-    `/zapytanie/wyslane?${new URLSearchParams({ miasto: d.miasto, forma: d.forma, ceremonia: d.ceremonia, miejsce: d.miejsce, dom: d.dom ?? "" })}`,
+    `/zapytanie/wyslane?${new URLSearchParams({
+      miasto: info!.city_slug,
+      forma: info!.burial,
+      ceremonia: info!.ceremony,
+      miejsce: info!.place_of_death,
+      dom: info!.preferred_home_id ?? "",
+    })}`,
   );
+}
+
+export async function resendCode(formData: FormData) {
+  const d = z.guid().safeParse(formData.get("d"));
+  if (!d.success) redirect("/zapytanie");
+  const here = `/oferty/potwierdz?d=${d.data}`;
+  if (!(await rateLimit("kod-sms-ponownie", 5, 60 * 60 * 1000))) redirect(withMessage(here, "blad", "Zbyt wiele prób. Spróbuj za chwilę."), RedirectType.replace);
+  let row: { code: string; phone: string } | undefined;
+  try {
+    [row] = await asAnon((tx) => tx<{ code: string; phone: string }[]>`select * from resend_inquiry_code(${d.data})`);
+  } catch (e) {
+    const message = userFacingDbError(e);
+    if (!message) throw e;
+    redirect(withMessage(here, "blad", message), RedirectType.replace);
+  }
+  await deliverCode(d.data, row!.code, row!.phone, here);
+  redirect(withMessage(here, "ok", "Wysłaliśmy nowy kod. Poprzedni przestał działać."), RedirectType.replace);
 }
 
 const familySchema = z.object({

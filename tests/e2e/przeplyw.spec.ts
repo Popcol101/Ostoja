@@ -59,6 +59,20 @@ test("rodzina wysyła zapytanie, zakład je przyjmuje i prowadzi zlecenie", asyn
   await page.getByLabel(/Zgadzam się na przekazanie/).check();
   await shot(page, "04-kontakt");
   await page.getByRole("button", { name: "Poproś o kontakt" }).click();
+
+  // Kod z SMS-a (wersja testowa pokazuje go na ekranie). Zły kod – komunikat; dobry – zapytanie idzie do zakładu.
+  await expect(page.getByRole("heading", { name: "Wpisz kod z SMS-a" })).toBeVisible();
+  await expect(page.getByText("+48 600 ••• 200")).toBeVisible();
+  const code = (await page.locator("span.font-mono").innerText()).trim();
+  expect(code).toMatch(/^\d{6}$/);
+  await shot(page, "05a-kod-sms");
+  await settled(page);
+  await page.getByLabel("Kod (6 cyfr)").fill(code === "000000" ? "111111" : "000000");
+  await page.getByRole("button", { name: "Potwierdź i wyślij zapytanie" }).click();
+  await expect(page.getByText("Nieprawidłowy kod. Sprawdź SMS i wpisz go jeszcze raz.")).toBeVisible();
+  await settled(page);
+  await page.getByLabel("Kod (6 cyfr)").fill(code);
+  await page.getByRole("button", { name: "Potwierdź i wyślij zapytanie" }).click();
   await expect(page.getByRole("heading", { name: "Zapytanie wysłane" })).toBeVisible();
   await expect(page.getByText("Dom Pogrzebowy Cisza oddzwoni do Ciebie w ciągu 15 minut.")).toBeVisible();
   await shot(page, "05-wyslane");

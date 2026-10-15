@@ -21,7 +21,7 @@ fi
 
 psql "$URL" -v ON_ERROR_STOP=1 -q <<'SQL'
 begin;
-truncate table public.notifications, public.push_subscriptions, public.bookings, public.events, public.duty_shifts,
+truncate table public.notifications, public.push_subscriptions, public.inquiry_drafts, public.invitations, public.admin_audit, public.bookings, public.events, public.duty_shifts,
   public.order_tasks, public.orders, public.offers, public.inquiries, public.resources, public.price_items,
   public.memberships, public.funeral_homes, public.price_catalog, public.cities restart identity cascade;
 commit;

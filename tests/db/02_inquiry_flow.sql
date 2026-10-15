@@ -4,7 +4,7 @@ begin;
 -- Gość tworzy zapytanie do wybranego zakładu (Kalina) — trafia tylko tam.
 create temp table t_ids (name text primary key, id uuid) on commit drop;
 grant all on t_ids to anon, authenticated;
-set local role anon;
+-- create_inquiry wywołuje tylko confirm_inquiry (po kodzie SMS) – w testach wołamy ją bezpośrednio jako właściciel bazy.
 insert into t_ids values ('preferred', create_inquiry('{
   "city_slug":"lodz","burial":"kremacja","ceremony":"swiecka","place_of_death":"szpital",
   "budget":"zasilek","contact_name":"Ola Testowa","contact_phone":"+48 501 000 000",
@@ -34,7 +34,6 @@ begin
 end $$;
 
 -- Niepoprawny telefon jest odrzucany.
-set local role anon;
 do $$ begin
   perform create_inquiry('{"city_slug":"lodz","burial":"kremacja","ceremony":"bez","place_of_death":"dom",
                            "contact_name":"X Y","contact_phone":"abc"}'::jsonb);

@@ -2,8 +2,6 @@
 begin;
 
 -- Nowe zapytanie od rodziny tworzy push do wybranego zakładu (Cisza).
-set local role anon;
-select set_config('request.jwt.claims', '{"role":"anon"}', true);
 create temp table t_inq as select create_inquiry(jsonb_build_object(
   'city_slug', 'lodz', 'burial', 'kremacja', 'ceremony', 'religijna', 'place_of_death', 'szpital',
   'contact_name', 'Test Testowy', 'contact_phone', '+48 600 100 200',
