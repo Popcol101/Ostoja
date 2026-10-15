@@ -233,6 +233,7 @@ const profileSchema = z.object({
 
 export async function updateProfile(formData: FormData) {
   const me = await requireMember();
+  if (me.role === "ekipa") back("/panel/profil", "Profil i cennik zmienia właściciel albo biuro.");
   const parsed = profileSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) back("/panel/profil", parsed.error.issues[0]?.message ?? "Sprawdź dane profilu.");
   const p = parsed.data;
@@ -247,6 +248,7 @@ export async function updateProfile(formData: FormData) {
 
 export async function updatePrices(formData: FormData) {
   const me = await requireMember();
+  if (me.role === "ekipa") back("/panel/profil", "Profil i cennik zmienia właściciel albo biuro.");
   const entries = [...formData.entries()].filter(([k]) => k.startsWith("price:"));
   const rows: { key: string; price: number | null }[] = [];
   for (const [k, v] of entries) {

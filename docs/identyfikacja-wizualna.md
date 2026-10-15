@@ -6,7 +6,7 @@ Ostoja łączy rodziny organizujące pogrzeb z zakładami pogrzebowymi. Marka ma
 
 ## Idea
 
-- **Brama i droga.** Znak to łuk bramy i prosta linia drogi w jego osi. Droga zaczyna się przed progiem i prowadzi do środka. To ostatnia droga, którą rodzina przechodzi razem z bliską osobą, i miejsce, w którym ktoś na nią czeka.
+- **Brama i droga.** Znak to dwie bramy, jedna za drugą, i prosta droga w ich osi. Droga zaczyna się na progu i prowadzi w głąb. To ostatnia droga, którą rodzina przechodzi razem z bliską osobą, i miejsce, w którym ktoś na nią czeka.
 - **Trzy cechy:** spokój (dużo światła, mało elementów), jasność (pełne ceny, proste zdania, jedna decyzja na ekran), opieka (zawsze widać, do kogo zadzwonić).
 - **Czego unikamy:** czerni i lilii z nekrologów, złota i ornamentów, uśmiechniętych ludzi ze zdjęć stockowych, języka sprzedaży.
 
@@ -87,15 +87,16 @@ Zasady:
 
 ### Koncepcja
 
-Znak „Brama i droga” składa się z dwóch linii. Łuk bramy (szałwia) to ostoja: schronienie i próg, za którym ktoś czeka. Prosta linia drogi (piasek) biegnie w osi symetrii, zaczyna się przed progiem bramy i prowadzi do jej wnętrza – to ostatnia droga. Znak jest symetryczny i zbudowany z tych samych grubości co interfejs, dlatego dobrze wygląda zarówno na ikonie aplikacji, jak i na naklejce na drzwiach zakładu.
+Znak „Brama i droga” to dwie bramy, jedna za drugą, i prosta droga w osi symetrii. Zewnętrzny łuk (szałwia) to ostoja: schronienie i próg. Wewnętrzny, cieńszy łuk daje głębię – kolejny próg dalej, jak w perspektywie korytarza albo alei. Linia drogi (piasek) zaczyna się na progu i prowadzi w głąb – to ostatnia droga. Znak jest symetryczny, zbudowany z trzech linii o zaokrąglonych końcach i tych samych grubości co interfejs. Do 24 px używamy wersji małej, bez wewnętrznej bramy, żeby znak nie zlewał się w plamę.
 
 ### Konstrukcja (siatka 32 × 32)
 
 | Element | Geometria | Grubość | Kolor |
 | --- | --- | --- | --- |
-| Łuk bramy | półkole o promieniu 9,75 w osi x = 16, nogi do y = 28 | 2,5 (`stroke-mark`), zakończenia zaokrąglone | `brand` #3F5650 |
-| Droga | pionowa linia x = 16 od y = 17 do y = 30,75 – wychodzi 2,75 poniżej progu | 2 (`stroke-road`), zakończenia zaokrąglone | `sand` #A68B5B |
-| Wersja mała (≤ 24 px) | łuk promień 10, grubość 3,4; droga od 17,5 do 30,4, grubość 2,8 | | jak wyżej |
+| Brama zewnętrzna | półkole o promieniu 9,75 w osi x = 16, nogi do y = 28 | 2,5, zakończenia zaokrąglone | `brand` #3F5650 |
+| Brama wewnętrzna | półkole o promieniu 5 w osi x = 16, nogi do y = 28 | 1,6 | `brand` #3F5650 |
+| Droga | pionowa linia x = 16 od y = 21 do y = 28 (próg) | 2,2 | `sand` #A68B5B |
+| Wersja mała (≤ 24 px) | tylko brama zewnętrzna (promień 10, grubość 3,4) i droga od 18 do 28,5 (grubość 3) | | jak wyżej |
 
 Napis „Ostoja” to Newsreader 500 (rozmiar optyczny 48) zamieniony na krzywe. Wysokość wersalików = 0,56 wysokości znaku, odstęp znak–napis = 9/32 wysokości znaku, linia bazowa napisu na wysokości podstawy łuku. Pliki generuje `scripts/brand/build_logo.py` w repozytorium – zmiany w znaku wprowadzaj tylko tam.
 

@@ -37,7 +37,7 @@ Pełna księga znaku: docs/identyfikacja-wizualna.md. Pliki logo: public/brand/ 
 Paleta stonowana (zieleń i piasek złamane szarością): tło #ECEDEB (panel) / #F4F4F2 (rodziny), karty #FFFFFF
 z obramowaniem #D8DAD7, nagłówek panelu #1E2422. Kolor główny #3F5650, jasny akcent #E6EAE8,
 piasek #A68B5B (akcent, ostrzeżenia; tekst ostrzeżeń #6E5A33), tekst #1E2422 i #5C6461.
-Znak: łuk bramy i prosta linia drogi – nie zmieniaj proporcji, nie dodawaj elementów.
+Znak: dwie bramy jedna za drugą i prosta linia drogi w osi (do 24 px bez wewnętrznej bramy) – nie zmieniaj proporcji, nie dodawaj elementów.
 Fonty: Newsreader (nagłówki), Figtree (interfejs). Zaokrąglenia 10–16 px.
 Bez emoji, gradientów, cieni i „kart z kolorowym lewym brzegiem”.
 

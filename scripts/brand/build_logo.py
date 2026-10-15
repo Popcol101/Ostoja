@@ -14,19 +14,21 @@ os.makedirs(OUT, exist_ok=True)
 GREEN, AMBER, INK, LIGHT, AMBER_ON_DARK = "#3F5650", "#A68B5B", "#1E2422", "#E4E7E5", "#CDB98F"
 GROUND = "#F4F4F2"
 
-# Znak „Brama i droga”: łuk bramy i prosta linia drogi w osi symetrii. Droga zaczyna się przed
-# progiem bramy (wychodzi poniżej jej podstawy) i prowadzi do środka – ostatnia droga. Siatka 32 × 32.
+# Znak „Brama i droga”: dwie bramy jedna za drugą (perspektywa, próg za progiem) i prosta droga
+# w osi symetrii, prowadząca w głąb – ostatnia droga. Siatka 32 × 32.
 ARCH = "M6.25 28V14.75a9.75 9.75 0 0 1 19.5 0V28"
-ROAD = "M16 30.75V17"
-# Wersja do 24 px i mniej: grubsze linie.
+INNER = "M11 28V18.5a5 5 0 0 1 10 0V28"
+ROAD = "M16 28V21"
+# Wersja do 24 px i mniej: bez wewnętrznej bramy, grubsze linie (inaczej zlewa się w plamę).
 ARCH_S = "M6 28.5V15a10 10 0 0 1 20 0v13.5"
-ROAD_S = "M16 30.4V17.5"
+ROAD_S = "M16 28.5V18"
 
 
 def mark(arch_color, road_color, small=False):
-    a, r, w, rw = (ARCH_S, ROAD_S, 3.4, 2.8) if small else (ARCH, ROAD, 2.5, 2)
-    return (f'<path d="{a}" fill="none" stroke="{arch_color}" stroke-width="{w}" stroke-linecap="round"/>'
-            f'<path d="{r}" fill="none" stroke="{road_color}" stroke-width="{rw}" stroke-linecap="round"/>')
+    p = lambda d, c, w: f'<path d="{d}" fill="none" stroke="{c}" stroke-width="{w}" stroke-linecap="round"/>'
+    if small:
+        return p(ARCH_S, arch_color, 3.4) + p(ROAD_S, road_color, 3)
+    return p(ARCH, arch_color, 2.5) + p(INNER, arch_color, 1.6) + p(ROAD, road_color, 2.2)
 
 
 def svg(w, h, body, vb=None, title="Ostoja"):

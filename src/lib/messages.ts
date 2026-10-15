@@ -22,6 +22,7 @@ export const MESSAGES = {
   "sprawdz-daty": "Sprawdź daty i długość pól.",
   "sprawdz-termin": "Sprawdź dane terminu.",
   "sprawdz-profil": "Sprawdź dane profilu.",
+  "brak-uprawnien": "Profil i cennik zmienia właściciel albo biuro.",
   "potwierdz-umowe": "Zaznacz potwierdzenie podpisania umowy.",
   "ceny-zakres": "Ceny muszą być liczbami od 0 do 100 000 zł.",
   "podaj-date": "Podaj datę",

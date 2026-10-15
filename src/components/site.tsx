@@ -4,24 +4,24 @@ import { OfflineBanner } from "./client";
 
 export const OPIEKUN_PHONE = process.env.NEXT_PUBLIC_OPIEKUN_PHONE ?? "+48 000 000 000";
 
-/** Znak „Brama i droga”: łuk bramy i prosta linia drogi, która zaczyna się przed progiem. Pliki: public/brand/. */
+/** Znak „Brama i droga”: dwie bramy jedna za drugą i prosta droga w osi symetrii. Do 24 px bez wewnętrznej bramy.
+ * Pliki: public/brand/ (scripts/brand/build_logo.py). */
 export function Mark({ size = 30, onDark = false }: { size?: number; onDark?: boolean }) {
-  const small = size <= 24;
+  const gate = onDark ? "#E4E7E5" : "#3F5650";
+  const road = onDark ? "#CDB98F" : "#A68B5B";
+  if (size <= 24) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" className="shrink-0">
+        <path d="M6 28.5V15a10 10 0 0 1 20 0v13.5" fill="none" stroke={gate} strokeWidth={3.4} strokeLinecap="round" />
+        <path d="M16 28.5V18" stroke={road} strokeWidth={3} strokeLinecap="round" />
+      </svg>
+    );
+  }
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" className="shrink-0">
-      <path
-        d={small ? "M6 28.5V15a10 10 0 0 1 20 0v13.5" : "M6.25 28V14.75a9.75 9.75 0 0 1 19.5 0V28"}
-        fill="none"
-        stroke={onDark ? "#E4E7E5" : "#3F5650"}
-        strokeWidth={small ? 3.4 : 2.5}
-        strokeLinecap="round"
-      />
-      <path
-        d={small ? "M16 30.4V17.5" : "M16 30.75V17"}
-        stroke={onDark ? "#CDB98F" : "#A68B5B"}
-        strokeWidth={small ? 2.8 : 2}
-        strokeLinecap="round"
-      />
+      <path d="M6.25 28V14.75a9.75 9.75 0 0 1 19.5 0V28" fill="none" stroke={gate} strokeWidth={2.5} strokeLinecap="round" />
+      <path d="M11 28V18.5a5 5 0 0 1 10 0V28" fill="none" stroke={gate} strokeWidth={1.6} strokeLinecap="round" />
+      <path d="M16 28V21" stroke={road} strokeWidth={2.2} strokeLinecap="round" />
     </svg>
   );
 }

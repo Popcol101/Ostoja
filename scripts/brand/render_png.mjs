@@ -33,7 +33,7 @@ p{font-family:F;font-size:28px;color:#5C6461;margin:22px 0 0;max-width:700px}
 .big{position:absolute;right:-30px;bottom:-60px;width:440px}
 </style></head><body><div class="og"><div class="logo">${logo}</div>
 <div><h1>Pomożemy zorganizować pogrzeb. Spokojnie, krok po kroku.</h1><p>Pełne ceny zakładów w Twoim mieście. Zakład oddzwoni w 15 minut.</p></div>
-<svg class="big" viewBox="0 0 32 32"><path d="M6.25 28V14.75a9.75 9.75 0 0 1 19.5 0V28" fill="none" stroke="#E2E6E3" stroke-width="2.5" stroke-linecap="round"/><path d="M16 30.75V17" stroke="#E6DDCB" stroke-width="2" stroke-linecap="round"/></svg>
+<svg class="big" viewBox="0 0 32 32"><path d="M6.25 28V14.75a9.75 9.75 0 0 1 19.5 0V28" fill="none" stroke="#E2E6E3" stroke-width="2.5" stroke-linecap="round"/><path d="M11 28V18.5a5 5 0 0 1 10 0V28" fill="none" stroke="#E2E6E3" stroke-width="1.6" stroke-linecap="round"/><path d="M16 28V21" stroke="#E6DDCB" stroke-width="2.2" stroke-linecap="round"/></svg>
 </div></body></html>`);
 await og.waitForTimeout(300);
 await og.screenshot({ path: `${root}src/app/opengraph-image.png` });

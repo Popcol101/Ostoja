@@ -42,23 +42,34 @@ Linki dla rodzin: /r/demo-rodzina-mazur-0000000000000000000000000000 (przed umow
 | Rozliczenia | /panel/rozliczenia (billing_lines) | gotowe |
 | Strona dla rodzin | /, /zapytanie (kreator działa też bez JS), /oferty (sortowanie: odległość, cena, oceny), /oferty/kontakt, /zapytanie/wyslane, /r/[token], /pamiec/[slug] | gotowe |
 
-Testy: `npm test` (14 testów Vitest), `npm run test:db` (3/3), `npm run e2e` (6/6: pełny przepływ
-rodzina → zakład → umowa → klepsydra, link rodziny, strona pamięci, ochrona panelu; telefon 390 px i komputer 1280 px).
-Zrzuty: docs/zrzuty/ (telefon-*.png, komputer-*.png).
+**Od wieczoru 15 października także:**
+
+| Obszar | Pliki | Stan |
+| --- | --- | --- |
+| Identyfikacja wizualna | docs/identyfikacja-wizualna.md, public/brand/, scripts/brand/ | znak „Brama i droga” (dwie bramy i droga), paleta stonowana |
+| Logowanie linkiem z e-maila | src/lib/auth.ts, /logowanie, /logowanie/potwierdz | gotowe (Supabase Auth); tryb demo zostaje na wersji testowej |
+| Powiadomienia | migracja 20261016000100, src/lib/notify.ts, public/sw.js, /api/powiadomienia | push o nowym zapytaniu, SMS z linkiem dla rodziny (SMSAPI, tryb testowy) |
+| Role | migracja 20261016000200 | profil i cennik zmienia tylko właściciel i biuro (RLS + akcje) |
+| Wersja testowa | .github/workflows/, vercel.json, scripts/staging-reset.sh, robots | CI, migracje i reset danych z GitHuba, noindex |
+| Poradnik | docs/poradnik/ (Word + arkusz scenariuszy, skrypty do odtworzenia) | gotowe |
+
+Testy: `npm test` (25 testów Vitest), `npm run test:db` (5/5), `npm run e2e` (12/12: pełny przepływ
+rodzina → zakład → umowa → klepsydra, link rodziny, strona pamięci, ochrona panelu, logowanie linkiem, powiadomienia;
+telefon 390 px i komputer 1280 px). Zrzuty: docs/zrzuty/.
 
 ### Decyzje i znane ograniczenia
 - Komunikaty po akcjach: w adresie tylko kod (`?ok=umowa-podpisana`), teksty w src/lib/messages.ts – nikt nie podrzuci
   rodzinie fałszywego komunikatu linkiem.
 - Bez `loading.tsx`: w Next.js 15.5 granica ładowania gubi przekierowanie po akcji serwerowej (wykryte w E2E).
   Stan ładowania: SubmitButton i znacznik w menu panelu (useLinkStatus). Wrócić po aktualizacji Next.js.
-- Limit zapytań od rodzin (5/h na IP) trzymany w pamięci procesu – na produkcji przenieść do bazy lub Redis.
-- Brak SMS i powiadomień push: link dla rodziny zakład wysyła przyciskiem „Wyślij SMS-em” (aplikacja SMS w telefonie).
 - Dokumenty PDF przez druk w przeglądarce zamiast @react-pdf/renderer (prościej, polskie znaki bez osadzania fontów).
-- Wygasanie ofert: pg_cron na Supabase; lokalnie przy każdym odczycie skrzynki.
+- Wygasanie ofert i dosyłanie powiadomień: pg_cron na Supabase (scripts/supabase/harmonogram-powiadomien.sql);
+  lokalnie przy każdym odczycie skrzynki.
 
 ## Następne kroki (w tej kolejności)
-1. Przejść kryteria akceptacji z docs/zakres-panelu-v1.md z 1–2 zakładami na zrzutach i wersji testowej.
-2. Supabase Auth (link magiczny) zamiast logowania demo; zaproszenia pracowników.
-3. Powiadomienia: web-push dla nowego zapytania, SMS (SMSAPI) z linkiem dla rodziny i weryfikacją numeru.
-4. Wdrożenie: projekt Supabase (Frankfurt) + Vercel (region fra1), zmienne środowiskowe, DEMO_MODE=false na produkcji.
-5. Przegląd bezpieczeństwa i RODO przed prawdziwymi danymi (umowa powierzenia z zakładami, rejestr czynności).
+1. Postawić wersję testową według docs/poradnik/Ostoja-poradnik-wersji-testowej.docx (Supabase + Vercel, ok. godziny).
+2. Przejść scenariusze z arkusza z 1–2 zakładami; uwagi do zakładki Spotkania, błędy do zakładki Błędy.
+3. Zaproszenia pracowników z panelu (dziś konta zakłada się w Supabase i SQL).
+4. Weryfikacja numeru rodziny kodem SMS przed wysłaniem zapytania.
+5. Przegląd bezpieczeństwa i RODO przed prawdziwymi danymi (umowa powierzenia z zakładami, rejestr czynności),
+   potem produkcja z DEMO_MODE=false.
