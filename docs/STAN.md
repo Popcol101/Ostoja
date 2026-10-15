@@ -1,4 +1,4 @@
-# Stan prac – Ostoja (15 października 2026)
+# Stan prac – Ostoja (15 października 2026, koniec dnia)
 
 ## Zrobione
 
@@ -28,19 +28,37 @@ Wynik: `./tests/db/run.sh` → 3/3 OK.
 Linki dla rodzin: /r/demo-rodzina-mazur-0000000000000000000000000000 (przed umową),
 /r/demo-rodzina-nowak-0000000000000000000000000000 (po umowie). Strona pamięci: /pamiec/halina-nowak.
 
-## Blokada w poprzedniej sesji
-Brak dostępu do rejestru npm – nie dało się zainstalować Next.js. Aplikacja nie jest jeszcze napisana.
+**Aplikacja (segmenty 2–6) – działa i jest przetestowana.**
+
+| Obszar | Pliki | Stan |
+| --- | --- | --- |
+| System wizualny | src/app/globals.css, src/components/ui.tsx, client.tsx, /styleguide, docs/design-system.md | gotowe |
+| Logowanie demo | /logowanie, src/lib/session.ts (jose, ciasteczko httpOnly) | gotowe; Supabase Auth – do zrobienia |
+| Skrzynka zapytań | /panel/zapytania (get_inbox, accept_offer, decline_offer, licznik 15 min) | gotowe |
+| Zlecenia | /panel/zlecenia, karta zlecenia: kontakt, link dla rodziny, dane, terminy, umowa, koszt vs zasiłek, zadania, dokumenty, strona pamięci, etap | gotowe |
+| Dokumenty | klepsydra (A4, wersja religijna i świecka), kosztorys – druk do PDF z przeglądarki | gotowe |
+| Kalendarz | /panel/kalendarz: tydzień, dyżur, ostrzeżenie 24 h, do potwierdzenia, wpis ręczny, eksport .ics | gotowe |
+| Profil i cennik | /panel/profil, podgląd „Tak widzą to rodziny” | gotowe |
+| Rozliczenia | /panel/rozliczenia (billing_lines) | gotowe |
+| Strona dla rodzin | /, /zapytanie (kreator działa też bez JS), /oferty (sortowanie: odległość, cena, oceny), /oferty/kontakt, /zapytanie/wyslane, /r/[token], /pamiec/[slug] | gotowe |
+
+Testy: `npm test` (14 testów Vitest), `npm run test:db` (3/3), `npm run e2e` (6/6: pełny przepływ
+rodzina → zakład → umowa → klepsydra, link rodziny, strona pamięci, ochrona panelu; telefon 390 px i komputer 1280 px).
+Zrzuty: docs/zrzuty/ (telefon-*.png, komputer-*.png).
+
+### Decyzje i znane ograniczenia
+- Komunikaty po akcjach: w adresie tylko kod (`?ok=umowa-podpisana`), teksty w src/lib/messages.ts – nikt nie podrzuci
+  rodzinie fałszywego komunikatu linkiem.
+- Bez `loading.tsx`: w Next.js 15.5 granica ładowania gubi przekierowanie po akcji serwerowej (wykryte w E2E).
+  Stan ładowania: SubmitButton i znacznik w menu panelu (useLinkStatus). Wrócić po aktualizacji Next.js.
+- Limit zapytań od rodzin (5/h na IP) trzymany w pamięci procesu – na produkcji przenieść do bazy lub Redis.
+- Brak SMS i powiadomień push: link dla rodziny zakład wysyła przyciskiem „Wyślij SMS-em” (aplikacja SMS w telefonie).
+- Dokumenty PDF przez druk w przeglądarce zamiast @react-pdf/renderer (prościej, polskie znaki bez osadzania fontów).
+- Wygasanie ofert: pg_cron na Supabase; lokalnie przy każdym odczycie skrzynki.
 
 ## Następne kroki (w tej kolejności)
-1. Uruchom lokalny PostgreSQL 16 na porcie 54322 (instrukcja w README.md) i `./tests/db/run.sh`.
-2. Szkielet Next.js 15 + Tailwind w tym repozytorium (nie nadpisuj supabase/, tests/, docs/).
-3. `src/lib/db.ts`: postgres.js, `withUser(userId, fn)` i `asAnon(fn)` (set local role + request.jwt.claims).
-4. Logowanie demo: `/logowanie` z listą kont testowych, podpisane ciasteczko sesji (jose), DEMO_MODE=true.
-5. System wizualny i `/styleguide` (segment 2 dokumentu z promptami).
-6. Panel: skrzynka zapytań (get_inbox, accept_offer, decline_offer), zlecenia, karta zlecenia,
-   kalendarz (calendar_events, bookings), dokumenty (klepsydra PDF, kosztorys, dane do ZUS),
-   profil i cennik, rozliczenia (billing_lines).
-7. Strona dla rodzin: /, /zapytanie (kreator), /oferty (search_homes), /r/[token], /pamiec/[slug].
-8. Vitest dla logiki TS, Playwright: pełny przepływ + zrzuty 390 i 1280 px.
-
-Wzór wyglądu: prototypy „Ostoja – prototypy strony i aplikacji” (zrzuty do docs/prototypy/).
+1. Przejść kryteria akceptacji z docs/zakres-panelu-v1.md z 1–2 zakładami na zrzutach i wersji testowej.
+2. Supabase Auth (link magiczny) zamiast logowania demo; zaproszenia pracowników.
+3. Powiadomienia: web-push dla nowego zapytania, SMS (SMSAPI) z linkiem dla rodziny i weryfikacją numeru.
+4. Wdrożenie: projekt Supabase (Frankfurt) + Vercel (region fra1), zmienne środowiskowe, DEMO_MODE=false na produkcji.
+5. Przegląd bezpieczeństwa i RODO przed prawdziwymi danymi (umowa powierzenia z zakładami, rejestr czynności).
