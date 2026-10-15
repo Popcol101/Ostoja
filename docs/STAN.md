@@ -78,8 +78,10 @@ Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, pan
    - Supabase (projekt iarvcirfxjlyxpicnxyr, Frankfurt): wszystkie migracje do 800 i dane testowe wgrane (6 zakładów).
      Doradca bezpieczeństwa: zostały tylko uwagi zamierzone (funkcje strony dla rodzin dla anon, funkcje panelu dla
      authenticated – każda sprawdza auth.uid()) i „RLS bez polityk” dla tabel dostępnych wyłącznie przez funkcje.
-   - Vercel: konektor nie ma dostępu do zespołu „ostoja”, więc projekt zakłada się ręcznie (vercel.com/new → import
-     Popcol101/Ostoja → wklejenie zmiennych). Bez DATABASE_URL build się nie uda (src/lib/db.ts).
+   - Vercel: projekt „ostoja” (zespół ostoja, region fra1) założony przez konektor ze wszystkimi zmiennymi oprócz
+     DATABASE_URL i SUPABASE_SERVICE_ROLE_KEY (wpisuje je właściciel). Brakuje połączenia z GitHubem:
+     konto Vercel nie ma jeszcze Login Connection do GitHuba, więc repozytorium trzeba podpiąć ręcznie
+     (Settings → Git). Bez DATABASE_URL build się nie uda (src/lib/db.ts).
    - Po pierwszym wdrożeniu: poprawić APP_URL i VAPID_SUBJECT na faktyczny adres, uruchomić
      scripts/supabase/harmonogram-powiadomien.sql (ten sam CRON_SECRET), w Supabase Auth wyłączyć rejestrację,
      ustawić Site URL i Redirect URLs na adres aplikacji.
