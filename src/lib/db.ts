@@ -47,6 +47,19 @@ export async function asAnon<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
   return result as T;
 }
 
+/**
+ * Operacje, które może wykonać tylko serwer aplikacji (kod SMS, przyjęcie zaproszenia, limity prób) –
+ * rola service_role. Nigdy nie wywołuj z danymi, których nie sprawdziła akcja serwerowa.
+ */
+export async function asServer<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
+  const result = await sql.begin(async (tx) => {
+    await tx`select set_config('request.jwt.claims', '{"role":"service_role"}', true)`;
+    await tx`set local role service_role`;
+    return fn(tx);
+  });
+  return result as T;
+}
+
 /** Komunikat błędu z bazy, który można pokazać użytkownikowi (nasze RAISE z kodami P0001 i 42501). */
 export function userFacingDbError(error: unknown): string | null {
   if (error && typeof error === "object" && "code" in error && "message" in error) {

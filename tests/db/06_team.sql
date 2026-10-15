@@ -1,7 +1,7 @@
 -- Zespół: zaproszenia, przyjęcie tylko przez konto z tym samym e-mailem, usuwanie członków.
 begin;
 create temp table t (k text primary key, v text);
-grant all on t to anon, authenticated;
+grant all on t to anon, authenticated, service_role;
 
 insert into auth.users (id, email) values
   ('00000000-0000-4000-8000-0000000000a1', 'nowa@cisza.test'),
@@ -44,8 +44,19 @@ do $$ begin
   assert not exists (select 1 from team_members() where email like '%cisza%'), 'Piotr widzi zespół Ciszy';
 end $$;
 
--- Osoba z linkiem (anon): podgląd i przyjęcie.
+-- Osoba z linkiem: podgląd (anon) i przyjęcie (tylko serwer aplikacji, service_role).
 set local role anon;
+do $$ begin
+  perform accept_invitation((select v from t where k = 'token'), '00000000-0000-4000-8000-0000000000a1');
+  raise exception 'FAIL: anon przyjął zaproszenie przez API';
+exception when insufficient_privilege then null;
+end $$;
+do $$ begin
+  perform invitation_email((select v from t where k = 'token'));
+  raise exception 'FAIL: anon odczytał e-mail z zaproszenia';
+exception when insufficient_privilege then null;
+end $$;
+set local role service_role;
 do $$
 declare tok text := (select v from t where k = 'token');
 begin
@@ -101,7 +112,7 @@ do $$ begin
   perform revoke_invitation((select id from team_invitations() limit 1));
   assert (select count(*) from team_invitations()) = 0, 'odwołane wciąż na liście';
 end $$;
-set local role anon;
+set local role service_role;
 do $$ begin
   assert (select status from invitation_preview((select v from t where k = 't2'))) = 'odwolane', 'status odwołanego';
   assert invitation_email((select v from t where k = 't2')) is null, 'odwołane zwraca e-mail';

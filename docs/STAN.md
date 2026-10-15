@@ -47,29 +47,37 @@ Linki dla rodzin: /r/demo-rodzina-mazur-0000000000000000000000000000 (przed umow
 | Obszar | Pliki | Stan |
 | --- | --- | --- |
 | Identyfikacja wizualna | docs/identyfikacja-wizualna.md, public/brand/, scripts/brand/ | znak „Brama i droga” (dwie bramy i droga), paleta stonowana |
-| Logowanie linkiem z e-maila | src/lib/auth.ts, /logowanie, /logowanie/potwierdz | gotowe (Supabase Auth); tryb demo zostaje na wersji testowej |
-| Powiadomienia | migracja 20261016000100, src/lib/notify.ts, public/sw.js, /api/powiadomienia | push o nowym zapytaniu, SMS z linkiem dla rodziny (SMSAPI, tryb testowy) |
-| Role | migracja 20261016000200 | profil i cennik zmienia tylko właściciel i biuro (RLS + akcje) |
-| Wersja testowa | .github/workflows/, vercel.json, scripts/staging-reset.sh, robots | CI, migracje i reset danych z GitHuba, noindex |
-| Poradnik | docs/poradnik/ (Word + arkusz scenariuszy, skrypty do odtworzenia) | gotowe |
+| Logowanie linkiem z e-maila | src/lib/auth.ts, /logowanie, /logowanie/potwierdz | gotowe (Supabase Auth); konta testowe tylko @….test |
+| Powiadomienia | migracja 20261016000100, src/lib/notify.ts, public/sw.js, /api/powiadomienia | push o nowym zapytaniu, SMS z linkiem dla rodziny |
+| Role w zakładzie | migracja 20261016000200 | profil i cennik zmienia tylko właściciel i biuro |
+| Zespół zakładu | migracja 20261016000300, /panel/zespol, /zaproszenie | zaproszenia linkiem (7 dni, raz), odbieranie dostępu |
+| Panel administratora | migracja 20261016000400, /admin | ręczne dodawanie partnerów, zaproszenie właściciela, weryfikacja i wstrzymanie, zapytania do opiekuna, rozliczenia, dziennik działań |
+| Kod SMS dla rodziny | migracja 20261016000500, /oferty/potwierdz, src/lib/phone.ts | zapytanie trafia do zakładów dopiero po kodzie; w wersji testowej kod na ekranie |
+| Bezpieczeństwo | migracja 20261016000600, next.config.ts, src/lib/rate-limit.ts | funkcje z sekretami tylko dla serwera, limity w bazie, CSP, retencja danych |
+| Strony prawne | /prywatnosc, /regulamin | wersja robocza do przeglądu prawnego |
+| Dokumenty | docs/poradnik/ (poradnik + arkusz scenariuszy), docs/prawne/ (RODO i bezpieczeństwo, szkic) | gotowe |
+| Wersja testowa | .github/workflows/, vercel.json, scripts/staging-reset.sh | CI, migracje i reset danych z GitHuba, noindex |
 
-Testy: `npm test` (25 testów Vitest), `npm run test:db` (5/5), `npm run e2e` (12/12: pełny przepływ
-rodzina → zakład → umowa → klepsydra, link rodziny, strona pamięci, ochrona panelu, logowanie linkiem, powiadomienia;
+Testy: `npm test` (27 testów Vitest), `npm run test:db` (9/9), `npm run e2e` (24/24: przepływ rodzina → kod SMS → zakład →
+umowa → klepsydra, link rodziny, strona pamięci, logowanie linkiem, powiadomienia, zespół, administracja, strony prawne;
 telefon 390 px i komputer 1280 px). Zrzuty: docs/zrzuty/.
 
+Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, panel /admin.
+
 ### Decyzje i znane ograniczenia
-- Komunikaty po akcjach: w adresie tylko kod (`?ok=umowa-podpisana`), teksty w src/lib/messages.ts – nikt nie podrzuci
-  rodzinie fałszywego komunikatu linkiem.
+- Komunikaty po akcjach: w adresie tylko kod (`?ok=umowa-podpisana`), teksty w src/lib/messages.ts.
 - Bez `loading.tsx`: w Next.js 15.5 granica ładowania gubi przekierowanie po akcji serwerowej (wykryte w E2E).
-  Stan ładowania: SubmitButton i znacznik w menu panelu (useLinkStatus). Wrócić po aktualizacji Next.js.
-- Dokumenty PDF przez druk w przeglądarce zamiast @react-pdf/renderer (prościej, polskie znaki bez osadzania fontów).
-- Wygasanie ofert i dosyłanie powiadomień: pg_cron na Supabase (scripts/supabase/harmonogram-powiadomien.sql);
-  lokalnie przy każdym odczycie skrzynki.
+- Dokumenty PDF przez druk w przeglądarce zamiast @react-pdf/renderer.
+- Funkcje bazy zwracające sekrety (kod SMS, e-mail z zaproszenia) wywołuje tylko serwer (`asServer`, rola service_role);
+  test 09_hardening pilnuje, by rola anon miała dostęp tylko do funkcji strony dla rodzin.
+- Harmonogram (pg_cron na Supabase): wysyłka powiadomień co minutę i retencja danych codziennie –
+  scripts/supabase/harmonogram-powiadomien.sql.
 
 ## Następne kroki (w tej kolejności)
 1. Postawić wersję testową według docs/poradnik/Ostoja-poradnik-wersji-testowej.docx (Supabase + Vercel, ok. godziny).
+   Z konektorem Supabase Claude może założyć bazę sam.
 2. Przejść scenariusze z arkusza z 1–2 zakładami; uwagi do zakładki Spotkania, błędy do zakładki Błędy.
-3. Zaproszenia pracowników z panelu (dziś konta zakłada się w Supabase i SQL).
-4. Weryfikacja numeru rodziny kodem SMS przed wysłaniem zapytania.
-5. Przegląd bezpieczeństwa i RODO przed prawdziwymi danymi (umowa powierzenia z zakładami, rejestr czynności),
-   potem produkcja z DEMO_MODE=false.
+3. Przegląd prawny: docs/prawne/Ostoja-RODO-i-bezpieczenstwo-szkic.docx, /prywatnosc, /regulamin; umowy DPA z dostawcami.
+4. Do dopracowania: uzasadnienie przy wstrzymaniu zakładu (P2B), procedura naruszeń i realizacji praw osób,
+   monitoring błędów bez danych osobowych, pełna CSP dla skryptów.
+5. Produkcja: DEMO_MODE=false, ALLOW_INDEXING=true, SMSAPI_TEST=false, plany Supabase Pro i Vercel Pro.

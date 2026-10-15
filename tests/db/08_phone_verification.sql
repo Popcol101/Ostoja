@@ -1,7 +1,7 @@
 -- Weryfikacja numeru rodziny: zapytanie powstaje dopiero po poprawnym kodzie z SMS-a.
 begin;
 create temp table t (k text primary key, v text);
-grant all on t to anon;
+grant all on t to anon, service_role;
 set local role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
 
@@ -16,6 +16,19 @@ do $$ begin
   raise exception 'FAIL: odczyt inquiry_drafts';
 exception when insufficient_privilege then null;
 end $$;
+-- Kod SMS dostaje tylko serwer – przez publiczne API (rola anon) nie da się go pobrać.
+do $$ begin
+  perform start_inquiry('{"city_slug":"lodz"}');
+  raise exception 'FAIL: anon wywołał start_inquiry';
+exception when insufficient_privilege then null;
+end $$;
+do $$ begin
+  perform confirm_inquiry(gen_random_uuid(), '123456');
+  raise exception 'FAIL: anon wywołał confirm_inquiry';
+exception when insufficient_privilege then null;
+end $$;
+
+set local role service_role;
 
 insert into t select 'draft', draft_id::text from start_inquiry(jsonb_build_object(
   'city_slug', 'lodz', 'burial', 'kremacja', 'ceremony', 'religijna', 'place_of_death', 'szpital',
@@ -54,7 +67,7 @@ declare d uuid := (select v from t where k = 'draft')::uuid;
 begin
   -- podmień kod na znany, żeby sprawdzić poprawną ścieżkę
   update inquiry_drafts set code_hash = sms_code_hash(id, '123456') where id = d;
-  set local role anon;
+  set local role service_role;
   select * into r from confirm_inquiry(d, '123456');
   assert r.status = 'ok', 'poprawny kod nie przeszedł';
   reset role;
@@ -63,14 +76,14 @@ begin
   assert (select contact_phone from inquiries where id = r.inquiry_id) = '+48 600 100 300', 'zły telefon w zapytaniu';
   assert (select count(*) from offers where inquiry_id = r.inquiry_id) = 1, 'zapytanie nie trafiło do zakładu';
   assert not exists (select 1 from inquiry_drafts where id = d), 'szkic nie skasowany';
-  set local role anon;
+  set local role service_role;
   select * into r from confirm_inquiry(d, '123456');
   assert r.status = 'wygasl', 'drugie użycie kodu';
 end $$;
 
 -- 5 złych prób blokuje szkic.
 reset role;
-set local role anon;
+set local role service_role;
 insert into t select 'd2', draft_id::text from start_inquiry(jsonb_build_object(
   'city_slug', 'lodz', 'burial', 'kremacja', 'ceremony', 'bez', 'place_of_death', 'dom',
   'contact_name', 'Ola Testowa', 'contact_phone', '+48 600 100 301'));

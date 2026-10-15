@@ -8,7 +8,7 @@ import { Flash, param, type SearchParams } from "@/components/flash";
 import { OPIEKUN_PHONE, SiteFooter, SiteHeader } from "@/components/site";
 import { EmptyState, LinkButton, Notice } from "@/components/ui";
 import { confirmInquiry, resendCode } from "@/app/rodzina-actions";
-import { asAnon } from "@/lib/db";
+import { asServer } from "@/lib/db";
 import { DEMO_CODE_COOKIE, parseDemoCode } from "@/lib/phone";
 
 export const metadata: Metadata = { title: "Kod z SMS-a – Ostoja", robots: { index: false, follow: false } };
@@ -31,7 +31,7 @@ type Info = {
 export default async function ConfirmPhone({ searchParams }: { searchParams: SearchParams }) {
   const d = (await param(searchParams, "d")) ?? "";
   if (!/^[0-9a-f-]{36}$/i.test(d)) redirect("/zapytanie");
-  const info = await asAnon(async (tx) => {
+  const info = await asServer(async (tx) => {
     const [row] = await tx<Info[]>`select * from draft_info(${d})`;
     return row ?? null;
   });

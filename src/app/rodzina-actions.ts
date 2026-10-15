@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { after } from "next/server";
 import { RedirectType, redirect } from "next/navigation";
 import { z } from "zod";
-import { asAnon, userFacingDbError } from "@/lib/db";
+import { asAnon, asServer, userFacingDbError } from "@/lib/db";
 import { warsawToUtc } from "@/lib/format";
 import { withMessage } from "@/lib/messages";
 import { processOutbox, sendSms, smsConfig, smsNumber } from "@/lib/notify";
@@ -59,7 +59,7 @@ export async function createInquiry(formData: FormData) {
   let started: { draft_id: string; code: string } | null = null;
   let error: string | null = null;
   try {
-    [started] = await asAnon((tx) => tx<{ draft_id: string; code: string }[]>`select * from start_inquiry(${tx.json({
+    [started] = await asServer((tx) => tx<{ draft_id: string; code: string }[]>`select * from start_inquiry(${tx.json({
       city_slug: d.miasto,
       burial: d.forma,
       ceremony: d.ceremonia,
@@ -120,7 +120,7 @@ export async function confirmInquiry(formData: FormData) {
   const here = `/oferty/potwierdz?d=${d}`;
   if (!(await rateLimit("kod-sms", 20, 15 * 60 * 1000))) redirect(withMessage(here, "blad", "Zbyt wiele prób. Spróbuj za chwilę."), RedirectType.replace);
 
-  const { info, result } = await asAnon(async (tx) => {
+  const { info, result } = await asServer(async (tx) => {
     const [info] = await tx<DraftInfo[]>`select city_slug, burial, ceremony, place_of_death, budget, preferred_home_id from draft_info(${d})`;
     const [result] = await tx<{ status: string; inquiry_id: string | null; attempts_left: number }[]>`select * from confirm_inquiry(${d}, ${kod})`;
     return { info, result };
@@ -149,7 +149,7 @@ export async function resendCode(formData: FormData) {
   if (!(await rateLimit("kod-sms-ponownie", 5, 60 * 60 * 1000))) redirect(withMessage(here, "blad", "Zbyt wiele prób. Spróbuj za chwilę."), RedirectType.replace);
   let row: { code: string; phone: string } | undefined;
   try {
-    [row] = await asAnon((tx) => tx<{ code: string; phone: string }[]>`select * from resend_inquiry_code(${d.data})`);
+    [row] = await asServer((tx) => tx<{ code: string; phone: string }[]>`select * from resend_inquiry_code(${d.data})`);
   } catch (e) {
     const message = userFacingDbError(e);
     if (!message) throw e;

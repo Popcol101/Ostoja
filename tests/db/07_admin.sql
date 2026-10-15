@@ -1,7 +1,7 @@
 -- Panel administratora: tylko administratorzy Ostoi; dodanie partnera, weryfikacja, zaproszenie, dziennik.
 begin;
 create temp table t (k text primary key, v text);
-grant all on t to anon, authenticated;
+grant all on t to anon, authenticated, service_role;
 
 set local role authenticated;
 
@@ -89,7 +89,7 @@ end $$;
 
 -- Właściciel przyjmuje zaproszenie i zarządza swoim zakładem.
 insert into auth.users (id, email) values ('00000000-0000-4000-8000-0000000000b1', 'wlasciciel@wierzba.test');
-set local role anon;
+set local role service_role;
 select accept_invitation((select v from t where k = 'token'), '00000000-0000-4000-8000-0000000000b1');
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000000b1","role":"authenticated"}', true);

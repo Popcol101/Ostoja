@@ -97,6 +97,7 @@ export default async function KontaktPage({ searchParams }: { searchParams: Sear
             <input type="checkbox" name="zgoda" value="tak" required className="mt-0.5 size-5 shrink-0 accent-brand" />
             <span className="text-[15px]">
               Zgadzam się na przekazanie mojego imienia i numeru telefonu zakładowi, który przyjmie zapytanie, w celu kontaktu w sprawie pogrzebu.
+              Zasady: <Link href="/prywatnosc" className="font-semibold text-brand">polityka prywatności</Link>.
             </span>
           </label>
 

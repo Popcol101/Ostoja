@@ -8,6 +8,8 @@ const security = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+  // Bez osadzania w ramkach, bez wtyczek, formularze tylko do siebie. Skrypty Next.js są inline, więc bez script-src.
+  { key: "Content-Security-Policy", value: "base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'" },
 ];
 
 const nextConfig: NextConfig = {

@@ -142,3 +142,14 @@ test("strona pamięci nieopublikowana daje 404, panel wymaga logowania", async (
   await page.goto("/panel/zlecenia");
   await expect(page).toHaveURL(/\/logowanie/);
 });
+
+test("polityka prywatności i regulamin są dostępne ze stopki", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: "Prywatność" }).click();
+  await expect(page.getByRole("heading", { name: "Polityka prywatności", level: 1 })).toBeVisible();
+  await expect(page.getByText("Nie pytamy o przyczynę zgonu ani o numer PESEL.", { exact: false })).toBeVisible();
+  await shot(page, "20-prywatnosc");
+  await page.getByRole("link", { name: "Regulamin" }).click();
+  await expect(page.getByRole("heading", { name: "Regulamin serwisu dla rodzin", level: 1 })).toBeVisible();
+  await expect(page.getByText("Zakłady nie płacą za miejsce na liście", { exact: false })).toBeVisible();
+});

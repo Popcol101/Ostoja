@@ -47,11 +47,11 @@ ws.column_dimensions["A"].width = 24
 ws.column_dimensions["B"].width = 90
 ws["A1"] = "Ostoja – testy wersji testowej"
 ws["A1"].font = Font(name="Georgia", size=18, color=INK)
-ws["A2"] = "Arkusz do poradnika „Ostoja-poradnik-wersji-testowej.docx”. Stan na 15 października 2026. Tylko dane fikcyjne."
+ws["A2"] = "Arkusz do poradnika „Ostoja-poradnik-wersji-testowej.docx”. Stan na 16 października 2026. Tylko dane fikcyjne."
 ws["A2"].font = F(color=MUTED)
 rows = [
     ("Zakładka", "Do czego służy"),
-    ("Scenariusze", "31 scenariuszy z poradnika (rozdział 5). Przy każdym wybierz Wynik z listy (OK, Błąd, Nie sprawdzono), wpisz datę, tester i numer błędu. Wypełniasz tylko żółte kolumny."),
+    ("Scenariusze", f"{len(scen)} scenariuszy z poradnika (rozdział 5). Przy każdym wybierz Wynik z listy (OK, Błąd, Nie sprawdzono), wpisz datę, tester i numer błędu. Wypełniasz tylko żółte kolumny."),
     ("Podsumowanie", "Liczy się samo: ile scenariuszy sprawdzono i ile ma błąd, w podziale na obszary. Nic tu nie wpisujesz."),
     ("Błędy", "Rejestr błędów i uwag. Jeden wiersz = jeden problem. Pierwszy wiersz to przykład – nadpisz go albo usuń."),
     ("Spotkania", "Notatki ze spotkań z zakładami: pięć stałych pytań z poradnika (rozdział 8). Pierwszy wiersz to przykład."),

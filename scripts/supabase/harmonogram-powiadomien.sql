@@ -21,5 +21,8 @@ select cron.schedule(
   $$
 );
 
+-- Retencja danych (polityka prywatności): codziennie o 3:15 czasu UTC.
+select cron.schedule('ostoja-retencja', '15 3 * * *', $$ select public.purge_old_data(); $$);
+
 -- Sprawdzenie: select * from cron.job_run_details order by start_time desc limit 5;
 -- Wyłączenie:  select cron.unschedule('ostoja-powiadomienia');

@@ -114,7 +114,7 @@ const add = (...x) => body.push(...x.flat());
 add(
   new Paragraph({ children: [new ImageRun({ type: "png", data: fs.readFileSync(path.join(DIR, "logo.png")), transformation: { width: 168, height: 50 } })], spacing: { after: 360 } }),
   new Paragraph({ children: [new TextRun({ text: "Poradnik wersji testowej", font: SERIF, size: 52, color: C.ink })], spacing: { after: 120 } }),
-  p("Jak postawić wersję testową, zalogować się, przejść scenariusze z zakładem i zgłosić uwagi. Stan na 15 października 2026.", { run: { color: C.muted, size: 23 } }),
+  p("Jak postawić wersję testową, zalogować się, przejść scenariusze z zakładem i zgłosić uwagi. Stan na 16 października 2026.", { run: { color: C.muted, size: 23 } }),
   p("Wersja testowa to ta sama aplikacja co docelowa, ale na osobnej bazie z fikcyjnymi danymi. Służy do pokazywania Ostoi zakładom, sprawdzania nowych funkcji i zbierania uwag przed wejściem z prawdziwymi danymi. Do poradnika należy arkusz **Ostoja-scenariusze-testow.xlsx**: lista kontrolna scenariuszy, rejestr błędów i notatki ze spotkań."),
   gap(80),
   box("Przed spotkaniem z zakładem (10 minut)", steps([
@@ -147,6 +147,8 @@ add(
     ["Link rodziny po umowie", `[adres]${URL_NOWAK}`, "rodzina"],
     ["Strona pamięci", "[adres]/pamiec/halina-nowak", "rodzina, goście"],
     ["Panel zakładu", "[adres]/logowanie", "zakład"],
+    ["Panel administratora", "[adres]/admin", "opiekunowie Ostoi"],
+    ["Polityka prywatności, regulamin", "[adres]/prywatnosc, [adres]/regulamin", "wszyscy"],
     ["System wizualny", "[adres]/styleguide", "zespół Ostoi"],
   ]),
   gap(),
@@ -185,6 +187,7 @@ add(
     ["APP_URL", "adres wersji testowej, bez ukośnika na końcu"],
     ["DEMO_MODE", "true (lista kont testowych na stronie logowania)"],
     ["SUPABASE_URL, SUPABASE_ANON_KEY", "z kroku 3.1.6"],
+    ["SUPABASE_SERVICE_ROLE_KEY", "Project Settings, API, klucz service_role – tylko w Vercel, nigdy w zmiennych NEXT_PUBLIC_; potrzebny do zakładania kont zaproszonych osób"],
     ["NEXT_PUBLIC_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY", "para kluczy do powiadomień push (poproś Claude o wygenerowanie)"],
     ["VAPID_SUBJECT", "mailto: i adres opiekuna Ostoi"],
     ["CRON_SECRET", "losowy ciąg, min. 16 znaków"],
@@ -216,30 +219,24 @@ add(
     ["Adam Sowiński", "adam@cisza.test", "Dom Pogrzebowy Cisza", "ekipa"],
     ["Piotr Lipski", "piotr@podlipami.test", "Usługi Pogrzebowe Pod Lipami", "właściciel"],
     ["Katarzyna Kalinowska", "kasia@kalina.test", "Zakład Pogrzebowy Kalina", "właściciel"],
+    ["Ola Maj", "ola@ostoja.test", "Ostoja (panel /admin)", "administrator"],
   ]),
   gap(),
   p("**Role.** Właściciel i biuro mogą wszystko w swoim zakładzie. Ekipa widzi zapytania, zlecenia i kalendarz, ale nie zmienia profilu zakładu ani cennika. Nikt nie widzi danych innego zakładu."),
-  p("**Konto testowe:** na stronie /logowanie kliknij osobę. Działa tylko przy DEMO_MODE=true."),
-  p("**Link z e-maila** (pracownicy zakładów w pilocie):"),
-  steps([
-    "Supabase, Authentication, Users, **Add user**, Create new user: służbowy e-mail pracownika, zaznacz **Auto Confirm User**.",
-    "Przypisz konto do zakładu w SQL Editor (podmień identyfikator zakładu z tabeli funeral_homes, rolę: wlasciciel, biuro albo ekipa, imię i nazwisko oraz e-mail):",
-  ]),
-  ...codeBlock([
-    "insert into memberships (user_id, home_id, role, display_name)",
-    "select id, '[id zakładu]', 'wlasciciel', '[Imię Nazwisko]'",
-    "from auth.users where email = '[e-mail]';",
-  ]),
-  p("Pracownik wchodzi na /logowanie, wpisuje e-mail i klika **Wyślij link**. W mailu klika **Zaloguj się do Ostoi**, a na stronie przycisk **Zaloguj się**. Link działa godzinę i tylko raz. Zapraszanie pracowników z panelu jest na liście następnych kroków."),
+  p("**Konto testowe:** na stronie /logowanie kliknij osobę. Działa tylko przy DEMO_MODE=true i tylko dla adresów kończących się na .test – prawdziwe konta logują się zawsze linkiem z e-maila."),
+  p("**Nowy zakład** dodaje administrator Ostoi w panelu /admin: Dodaj partnera, a na karcie zakładu Zaproś do panelu (rola Właściciel). Zakład pojawia się rodzinom dopiero po weryfikacji i z pełnym cennikiem."),
+  p("**Pracowników zakładu** zaprasza właściciel w panelu: Zespół, Utwórz zaproszenie. Link wysyła SMS-em albo e-mailem; działa 7 dni i raz. Osoba otwiera link, klika **Przyjmij zaproszenie**, a potem loguje się linkiem z e-maila: wpisuje e-mail na /logowanie, klika **Wyślij link**, w mailu **Zaloguj się do Ostoi** i na stronie **Zaloguj się**. Link logowania działa godzinę i tylko raz."),
+  p("Zakładanie kont przy przyjęciu zaproszenia wymaga zmiennej SUPABASE_SERVICE_ROLE_KEY (krok 3.3). Bez Supabase (lokalnie) konto zakłada się samo i osoba od razu trafia do panelu."),
 );
 
 // 5. Scenariusze
 const OBSZARY = [
   ["Rodzina", "5.1. Rodzina (najlepiej na telefonie, bez logowania)"],
   ["Zakład", "5.2. Zakład pogrzebowy"],
-  ["Logowanie", "5.3. Logowanie"],
-  ["Powiadomienia", "5.4. Powiadomienia"],
-  ["Prywatność", "5.5. Prywatność"],
+  ["Administracja", "5.3. Administracja Ostoi (konto Ola Maj)"],
+  ["Logowanie", "5.4. Logowanie"],
+  ["Powiadomienia", "5.5. Powiadomienia"],
+  ["Prywatność", "5.6. Prywatność"],
 ];
 add(
   new Paragraph({ children: [new PageBreak()] }),
@@ -261,6 +258,7 @@ add(
   h1("6. Powiadomienia push i SMS"),
   p("**Push o nowym zapytaniu** działa w Chrome, Edge i Firefox na Androidzie i komputerze. Na iPhonie (iOS 16.4 lub nowszy) trzeba najpierw dodać panel do ekranu początkowego: w Safari Udostępnij, **Do ekranu początkowego**, a potem otworzyć panel z ikony Ostoi. Powiadomienie zawiera tylko rodzaj pogrzebu i miasto, nigdy dane rodziny."),
   p("Powiadomienia włącza się osobno na każdym urządzeniu: Zapytania, **Włącz powiadomienia**. Wyłączyć można tym samym przyciskiem albo w ustawieniach przeglądarki."),
+  p("**Kod SMS dla rodziny:** zapytanie trafia do zakładów dopiero po wpisaniu kodu wysłanego na numer z formularza. Na wersji testowej bez klucza SMSAPI kod pokazuje się na ekranie (żółta ramka „Wersja testowa”). Limity: 5 prób, 3 kody na formularz, 3 formularze na numer w godzinie."),
   p("**SMS z linkiem dla rodziny:** przy SMSAPI_TEST=true SMS-y nie wychodzą i nic nie kosztują, a w karcie zlecenia widać status „nie wysłano”. Żeby sprawdzić prawdziwą wysyłkę, załóż konto w SMSAPI, wygeneruj token, ustaw SMSAPI_TOKEN i SMSAPI_TEST=false, a w zleceniu testowym wpisz własny numer. Pole nadawcy (np. nazwę zakładu) trzeba zgłosić w panelu SMSAPI i poczekać na jego akceptację."),
 );
 

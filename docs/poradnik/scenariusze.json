@@ -1,33 +1,353 @@
 [
- {"id":"R1","obszar":"Rodzina","nazwa":"Porównanie cen","konto":"bez logowania","kroki":"Strona główna → Sprawdź ceny w swoim mieście → Łódź → W szpitalu → Kremacja → Religijna → W granicach zasiłku → Pokaż oferty.","oczekiwane":"4 zakłady z pełną ceną i zdaniem „Z zasiłku zostaje …” albo „Dopłata ponad zasiłek …”.","urzadzenie":"telefon"},
- {"id":"R2","obszar":"Rodzina","nazwa":"Sortowanie","konto":"bez logowania","kroki":"Na liście ofert kliknij Najniższa cena, potem Najlepsze oceny.","oczekiwane":"Zmienia się tylko kolejność. Żadna oferta nie jest wyróżniona ani promowana.","urzadzenie":"telefon"},
- {"id":"R3","obszar":"Rodzina","nazwa":"Szczegóły ceny","konto":"bez logowania","kroki":"Przy Domu Pogrzebowym Cisza rozwiń Co obejmuje cena.","oczekiwane":"Lista usług z kwotami; usługi dodatkowe osobno, pod „Dodatkowo, jeśli zechcesz”.","urzadzenie":"telefon"},
- {"id":"R4","obszar":"Rodzina","nazwa":"Prośba o kontakt do wybranego zakładu","konto":"bez logowania","kroki":"Wybierz ten zakład (Cisza) → wpisz fikcyjne dane, np. Jan Testowy, 600 100 200 → zaznacz zgodę → Poproś o kontakt.","oczekiwane":"Ekran „Zapytanie wysłane” z nazwą zakładu i informacją o 15 minutach.","urzadzenie":"telefon"},
- {"id":"R5","obszar":"Rodzina","nazwa":"Zapytanie do 3 najbliższych","konto":"bez logowania","kroki":"Powtórz R1 i na dole listy kliknij Wyślij do 3 najbliższych → wyślij formularz.","oczekiwane":"Potwierdzenie bez nazwy zakładu. Zapytanie widzą trzy najbliższe zakłady.","urzadzenie":"telefon"},
- {"id":"R6","obszar":"Rodzina","nazwa":"Walidacja formularza","konto":"bez logowania","kroki":"W formularzu kontaktu wpisz telefon „123” albo nie zaznaczaj zgody i wyślij.","oczekiwane":"Formularz nie przechodzi; czytelny komunikat, co poprawić.","urzadzenie":"telefon"},
- {"id":"R7","obszar":"Rodzina","nazwa":"Link rodziny przed umową","konto":"link Mazur","kroki":"Otwórz /r/demo-rodzina-mazur-0000000000000000000000000000 → wpisz konto 12 3456 7890 1234 5678 9012 3456 → zaznacz usługę dodatkową → Zapisz i przekaż zakładowi.","oczekiwane":"Komunikat „Dziękujemy. Zakład widzi już te informacje.”; kwota razem uwzględnia usługę dodatkową.","urzadzenie":"telefon"},
- {"id":"R8","obszar":"Rodzina","nazwa":"Link rodziny po umowie","konto":"link Nowak","kroki":"Otwórz /r/demo-rodzina-nowak-0000000000000000000000000000.","oczekiwane":"Usługi dodatkowe zablokowane z informacją, że umowa jest podpisana.","urzadzenie":"telefon"},
- {"id":"R9","obszar":"Rodzina","nazwa":"Strona pamięci","konto":"bez logowania","kroki":"Otwórz /pamiec/halina-nowak.","oczekiwane":"Imię i nazwisko, lata życia, słowa rodziny i termin uroczystości.","urzadzenie":"telefon"},
- {"id":"R10","obszar":"Rodzina","nazwa":"Brak internetu","konto":"bez logowania","kroki":"Na otwartej stronie włącz tryb samolotowy.","oczekiwane":"Pasek „Brak połączenia z internetem…”.","urzadzenie":"telefon"},
- {"id":"Z1","obszar":"Zakład","nazwa":"Nowe zapytanie bez danych rodziny","konto":"Anna Cichońska","kroki":"Zaloguj się → Zapytania.","oczekiwane":"Karta „Nowe zapytanie” z licznikiem 15 minut. Nie widać imienia ani telefonu rodziny.","urzadzenie":"telefon"},
- {"id":"Z2","obszar":"Zakład","nazwa":"Przyjęcie zapytania","konto":"Anna Cichońska","kroki":"Przy zapytaniu z R4 kliknij Przyjmij i zadzwoń.","oczekiwane":"Karta zlecenia z imieniem i telefonem rodziny oraz przyciskiem Zadzwoń.","urzadzenie":"telefon"},
- {"id":"Z3","obszar":"Zakład","nazwa":"Odmowa i przekazanie dalej","konto":"Anna, potem Piotr","kroki":"Przy innym zapytaniu kliknij Nie mogę → wyloguj się → zaloguj jako Piotr Lipski.","oczekiwane":"Komunikat „Zapytanie trafi do innego zakładu.”; zapytanie pojawia się u Piotra.","urzadzenie":"komputer"},
- {"id":"Z4","obszar":"Zakład","nazwa":"Termin i zajęty karawan","konto":"Anna Cichońska","kroki":"W karcie zlecenia → Dodaj termin z karawanem na godzinę, w której karawan jest już zajęty (zobacz Kalendarz).","oczekiwane":"Komunikat „Ten zasób jest już zarezerwowany w tym czasie.”; termin nie zapisuje się.","urzadzenie":"komputer"},
- {"id":"Z5","obszar":"Zakład","nazwa":"Reguła 24 godzin","konto":"Anna Cichońska","kroki":"Otwórz zlecenie Stanisława Mazura i Kalendarz.","oczekiwane":"Ostrzeżenie „Mniej niż 24 h od zgonu”; zapis nie jest blokowany.","urzadzenie":"komputer"},
- {"id":"Z6","obszar":"Zakład","nazwa":"Umowa i dokumenty","konto":"Anna Cichońska","kroki":"Zaznacz potwierdzenie → Umowa podpisana → Klepsydra do druku → Kosztorys dla rodziny.","oczekiwane":"Komunikat „Umowa oznaczona jako podpisana.”; dokumenty A4 gotowe do druku lub zapisu jako PDF.","urzadzenie":"komputer"},
- {"id":"Z7","obszar":"Zakład","nazwa":"SMS z linkiem dla rodziny","konto":"Anna Cichońska","kroki":"W karcie zlecenia kliknij Wyślij SMS z linkiem.","oczekiwane":"Na wersji testowej status „nie wysłano” (tryb testowy, SMS nie wychodzi).","urzadzenie":"telefon"},
- {"id":"Z8","obszar":"Zakład","nazwa":"Kalendarz i eksport","konto":"Anna Cichońska","kroki":"Kalendarz → tydzień w przód i z powrotem → Pobierz kalendarz (.ics) → otwórz plik w Kalendarzu Google lub w telefonie.","oczekiwane":"Terminy tygodnia, dyżur, lista „Do potwierdzenia”; plik .ics dodaje terminy do kalendarza.","urzadzenie":"komputer"},
- {"id":"Z9","obszar":"Zakład","nazwa":"Zmiana cennika","konto":"Anna Cichońska","kroki":"Profil i cennik → zmień cenę kremacji → Zapisz cennik → sprawdź listę ofert jako rodzina (R1).","oczekiwane":"Nowa kwota w podglądzie „Tak widzą to rodziny” i na liście ofert.","urzadzenie":"komputer"},
- {"id":"Z10","obszar":"Zakład","nazwa":"Wyłączenie przyjmowania zapytań","konto":"Anna Cichońska","kroki":"W nagłówku wyłącz Przyjmuję zapytania → sprawdź listę ofert jako rodzina → włącz z powrotem.","oczekiwane":"Przy zakładzie „Dziś bez wolnych terminów”; nowe zapytania do niego nie trafiają.","urzadzenie":"telefon"},
- {"id":"Z11","obszar":"Zakład","nazwa":"Rola ekipy","konto":"Adam Sowiński","kroki":"Zaloguj się → Profil i cennik.","oczekiwane":"Widzi profil i cennik, ale nie może ich zmienić (formularze zablokowane, zapis odrzucony).","urzadzenie":"telefon"},
- {"id":"Z12","obszar":"Zakład","nazwa":"Izolacja zakładów","konto":"Piotr Lipski","kroki":"Zaloguj się → Zlecenia, Kalendarz, Rozliczenia.","oczekiwane":"Brak zleceń, terminów i rozliczeń Domu Pogrzebowego Cisza.","urzadzenie":"komputer"},
- {"id":"Z13","obszar":"Zakład","nazwa":"Rozliczenia","konto":"Anna Cichońska","kroki":"Rozliczenia.","oczekiwane":"250 zł netto za każde zlecenie z Ostoi z podpisaną umową; zlecenia spoza Ostoi bez opłaty.","urzadzenie":"komputer"},
- {"id":"L1","obszar":"Logowanie","nazwa":"Konto testowe","konto":"dowolne","kroki":"/logowanie → kliknij osobę z listy.","oczekiwane":"Panel zakładu tej osoby. Lista kont widoczna tylko przy DEMO_MODE=true.","urzadzenie":"telefon"},
- {"id":"L2","obszar":"Logowanie","nazwa":"Link z e-maila","konto":"konto założone w Supabase","kroki":"/logowanie → wpisz e-mail → Wyślij link → w mailu Zaloguj się do Ostoi → Zaloguj się.","oczekiwane":"Panel zakładu. Ten sam link drugi raz i po godzinie nie działa.","urzadzenie":"telefon"},
- {"id":"L3","obszar":"Logowanie","nazwa":"Panel bez logowania","konto":"brak","kroki":"W oknie prywatnym otwórz /panel/zlecenia.","oczekiwane":"Przekierowanie na /logowanie.","urzadzenie":"komputer"},
- {"id":"P1","obszar":"Powiadomienia","nazwa":"Push o nowym zapytaniu","konto":"Anna Cichońska","kroki":"Na telefonie: Zapytania → Włącz powiadomienia → zezwól → zablokuj telefon. Na komputerze wyślij zapytanie do Ciszy (R4).","oczekiwane":"W ciągu minuty na ekranie blokady „Nowe zapytanie – odpowiedz w 15 minut” z rodzajem pogrzebu i miastem, bez danych rodziny. Kliknięcie otwiera skrzynkę.","urzadzenie":"telefon"},
- {"id":"P2","obszar":"Powiadomienia","nazwa":"Push na iPhonie","konto":"Anna Cichońska","kroki":"Safari → Udostępnij → Do ekranu początkowego → otwórz panel z ikony → powtórz P1.","oczekiwane":"Jak P1 (wymaga iOS 16.4 lub nowszego).","urzadzenie":"iPhone"},
- {"id":"P3","obszar":"Powiadomienia","nazwa":"Prawdziwy SMS (opcjonalnie)","konto":"Anna Cichońska","kroki":"Ustaw SMSAPI_TOKEN i SMSAPI_TEST=false → w zleceniu testowym wpisz własny numer → Wyślij SMS z linkiem.","oczekiwane":"SMS z linkiem dla rodziny na Twój telefon; status „wysłano”.","urzadzenie":"telefon"},
- {"id":"B1","obszar":"Prywatność","nazwa":"Nieprawidłowy link rodziny","konto":"bez logowania","kroki":"Otwórz /r/nieprawidlowy-link-0000000000.","oczekiwane":"„Ten link wygasł albo jest nieprawidłowy.” i telefon do opiekuna; żadnych danych.","urzadzenie":"telefon"},
- {"id":"B2","obszar":"Prywatność","nazwa":"Fałszywy komunikat w adresie","konto":"bez logowania","kroki":"Otwórz /r/demo-rodzina-mazur-0000000000000000000000000000?ok=Zadzwon-pod-600000000.","oczekiwane":"Strona nie pokazuje tekstu z adresu (komunikaty tylko z listy aplikacji).","urzadzenie":"komputer"}
+ {
+  "id": "R1",
+  "obszar": "Rodzina",
+  "nazwa": "Porównanie cen",
+  "konto": "bez logowania",
+  "kroki": "Strona główna → Sprawdź ceny w swoim mieście → Łódź → W szpitalu → Kremacja → Religijna → W granicach zasiłku → Pokaż oferty.",
+  "oczekiwane": "4 zakłady z pełną ceną i zdaniem „Z zasiłku zostaje …” albo „Dopłata ponad zasiłek …”.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "R2",
+  "obszar": "Rodzina",
+  "nazwa": "Sortowanie",
+  "konto": "bez logowania",
+  "kroki": "Na liście ofert kliknij Najniższa cena, potem Najlepsze oceny.",
+  "oczekiwane": "Zmienia się tylko kolejność. Żadna oferta nie jest wyróżniona ani promowana.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "R3",
+  "obszar": "Rodzina",
+  "nazwa": "Szczegóły ceny",
+  "konto": "bez logowania",
+  "kroki": "Przy Domu Pogrzebowym Cisza rozwiń Co obejmuje cena.",
+  "oczekiwane": "Lista usług z kwotami; usługi dodatkowe osobno, pod „Dodatkowo, jeśli zechcesz”.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "R4",
+  "obszar": "Rodzina",
+  "nazwa": "Prośba o kontakt do wybranego zakładu",
+  "konto": "bez logowania",
+  "kroki": "Wybierz ten zakład (Cisza) → wpisz fikcyjne dane, np. Jan Testowy, 600 100 200 → zaznacz zgodę → Poproś o kontakt → wpisz kod z SMS-a (w wersji testowej kod jest na ekranie) → Potwierdź i wyślij zapytanie.",
+  "oczekiwane": "Ekran „Wpisz kod z SMS-a” z zamaskowanym numerem, potem „Zapytanie wysłane” z nazwą zakładu i informacją o 15 minutach.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "R5",
+  "obszar": "Rodzina",
+  "nazwa": "Zapytanie do 3 najbliższych",
+  "konto": "bez logowania",
+  "kroki": "Powtórz R1 i na dole listy kliknij Wyślij do 3 najbliższych → wyślij formularz → wpisz kod.",
+  "oczekiwane": "Potwierdzenie bez nazwy zakładu. Zapytanie widzą trzy najbliższe zakłady.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "R6",
+  "obszar": "Rodzina",
+  "nazwa": "Walidacja formularza",
+  "konto": "bez logowania",
+  "kroki": "W formularzu kontaktu wpisz telefon „123” albo nie zaznaczaj zgody i wyślij.",
+  "oczekiwane": "Formularz nie przechodzi; czytelny komunikat, co poprawić.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "R7",
+  "obszar": "Rodzina",
+  "nazwa": "Link rodziny przed umową",
+  "konto": "link Mazur",
+  "kroki": "Otwórz /r/demo-rodzina-mazur-0000000000000000000000000000 → wpisz konto 12 3456 7890 1234 5678 9012 3456 → zaznacz usługę dodatkową → Zapisz i przekaż zakładowi.",
+  "oczekiwane": "Komunikat „Dziękujemy. Zakład widzi już te informacje.”; kwota razem uwzględnia usługę dodatkową.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "R8",
+  "obszar": "Rodzina",
+  "nazwa": "Link rodziny po umowie",
+  "konto": "link Nowak",
+  "kroki": "Otwórz /r/demo-rodzina-nowak-0000000000000000000000000000.",
+  "oczekiwane": "Usługi dodatkowe zablokowane z informacją, że umowa jest podpisana.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "R9",
+  "obszar": "Rodzina",
+  "nazwa": "Strona pamięci",
+  "konto": "bez logowania",
+  "kroki": "Otwórz /pamiec/halina-nowak.",
+  "oczekiwane": "Imię i nazwisko, lata życia, słowa rodziny i termin uroczystości.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "R10",
+  "obszar": "Rodzina",
+  "nazwa": "Brak internetu",
+  "konto": "bez logowania",
+  "kroki": "Na otwartej stronie włącz tryb samolotowy.",
+  "oczekiwane": "Pasek „Brak połączenia z internetem…”.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "R11",
+  "obszar": "Rodzina",
+  "nazwa": "Zły kod SMS",
+  "konto": "bez logowania",
+  "kroki": "W kroku z kodem wpisz 000000 (albo inny zły kod).",
+  "oczekiwane": "„Nieprawidłowy kod…”; po 5 złych próbach „Za dużo prób” i powrót do formularza. Zapytanie nie trafia do zakładów.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "Z1",
+  "obszar": "Zakład",
+  "nazwa": "Nowe zapytanie bez danych rodziny",
+  "konto": "Anna Cichońska",
+  "kroki": "Zaloguj się → Zapytania.",
+  "oczekiwane": "Karta „Nowe zapytanie” z licznikiem 15 minut. Nie widać imienia ani telefonu rodziny.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "Z2",
+  "obszar": "Zakład",
+  "nazwa": "Przyjęcie zapytania",
+  "konto": "Anna Cichońska",
+  "kroki": "Przy zapytaniu z R4 kliknij Przyjmij i zadzwoń.",
+  "oczekiwane": "Karta zlecenia z imieniem i telefonem rodziny oraz przyciskiem Zadzwoń.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "Z3",
+  "obszar": "Zakład",
+  "nazwa": "Odmowa i przekazanie dalej",
+  "konto": "Anna, potem Piotr",
+  "kroki": "Przy innym zapytaniu kliknij Nie mogę → wyloguj się → zaloguj jako Piotr Lipski.",
+  "oczekiwane": "Komunikat „Zapytanie trafi do innego zakładu.”; zapytanie pojawia się u Piotra.",
+  "urzadzenie": "komputer"
+ },
+ {
+  "id": "Z4",
+  "obszar": "Zakład",
+  "nazwa": "Termin i zajęty karawan",
+  "konto": "Anna Cichońska",
+  "kroki": "W karcie zlecenia → Dodaj termin z karawanem na godzinę, w której karawan jest już zajęty (zobacz Kalendarz).",
+  "oczekiwane": "Komunikat „Ten zasób jest już zarezerwowany w tym czasie.”; termin nie zapisuje się.",
+  "urzadzenie": "komputer"
+ },
+ {
+  "id": "Z5",
+  "obszar": "Zakład",
+  "nazwa": "Reguła 24 godzin",
+  "konto": "Anna Cichońska",
+  "kroki": "Otwórz zlecenie Stanisława Mazura i Kalendarz.",
+  "oczekiwane": "Ostrzeżenie „Mniej niż 24 h od zgonu”; zapis nie jest blokowany.",
+  "urzadzenie": "komputer"
+ },
+ {
+  "id": "Z6",
+  "obszar": "Zakład",
+  "nazwa": "Umowa i dokumenty",
+  "konto": "Anna Cichońska",
+  "kroki": "Zaznacz potwierdzenie → Umowa podpisana → Klepsydra do druku → Kosztorys dla rodziny.",
+  "oczekiwane": "Komunikat „Umowa oznaczona jako podpisana.”; dokumenty A4 gotowe do druku lub zapisu jako PDF.",
+  "urzadzenie": "komputer"
+ },
+ {
+  "id": "Z7",
+  "obszar": "Zakład",
+  "nazwa": "SMS z linkiem dla rodziny",
+  "konto": "Anna Cichońska",
+  "kroki": "W karcie zlecenia kliknij Wyślij SMS z linkiem.",
+  "oczekiwane": "Na wersji testowej status „nie wysłano” (tryb testowy, SMS nie wychodzi).",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "Z8",
+  "obszar": "Zakład",
+  "nazwa": "Kalendarz i eksport",
+  "konto": "Anna Cichońska",
+  "kroki": "Kalendarz → tydzień w przód i z powrotem → Pobierz kalendarz (.ics) → otwórz plik w Kalendarzu Google lub w telefonie.",
+  "oczekiwane": "Terminy tygodnia, dyżur, lista „Do potwierdzenia”; plik .ics dodaje terminy do kalendarza.",
+  "urzadzenie": "komputer"
+ },
+ {
+  "id": "Z9",
+  "obszar": "Zakład",
+  "nazwa": "Zmiana cennika",
+  "konto": "Anna Cichońska",
+  "kroki": "Profil i cennik → zmień cenę kremacji → Zapisz cennik → sprawdź listę ofert jako rodzina (R1).",
+  "oczekiwane": "Nowa kwota w podglądzie „Tak widzą to rodziny” i na liście ofert.",
+  "urzadzenie": "komputer"
+ },
+ {
+  "id": "Z10",
+  "obszar": "Zakład",
+  "nazwa": "Wyłączenie przyjmowania zapytań",
+  "konto": "Anna Cichońska",
+  "kroki": "W nagłówku wyłącz Przyjmuję zapytania → sprawdź listę ofert jako rodzina → włącz z powrotem.",
+  "oczekiwane": "Przy zakładzie „Dziś bez wolnych terminów”; nowe zapytania do niego nie trafiają.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "Z11",
+  "obszar": "Zakład",
+  "nazwa": "Rola ekipy",
+  "konto": "Adam Sowiński",
+  "kroki": "Zaloguj się → Profil i cennik.",
+  "oczekiwane": "Widzi profil i cennik, ale nie może ich zmienić (formularze zablokowane, zapis odrzucony).",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "Z12",
+  "obszar": "Zakład",
+  "nazwa": "Izolacja zakładów",
+  "konto": "Piotr Lipski",
+  "kroki": "Zaloguj się → Zlecenia, Kalendarz, Rozliczenia.",
+  "oczekiwane": "Brak zleceń, terminów i rozliczeń Domu Pogrzebowego Cisza.",
+  "urzadzenie": "komputer"
+ },
+ {
+  "id": "Z13",
+  "obszar": "Zakład",
+  "nazwa": "Rozliczenia",
+  "konto": "Anna Cichońska",
+  "kroki": "Rozliczenia.",
+  "oczekiwane": "250 zł netto za każde zlecenie z Ostoi z podpisaną umową; zlecenia spoza Ostoi bez opłaty.",
+  "urzadzenie": "komputer"
+ },
+ {
+  "id": "Z14",
+  "obszar": "Zakład",
+  "nazwa": "Zaproszenie pracownika",
+  "konto": "Anna, potem nowa osoba",
+  "kroki": "Zespół → wpisz imię, e-mail (np. nowy@cisza.test), rolę Biuro → Utwórz zaproszenie → skopiuj link → otwórz go w oknie prywatnym → Przyjmij zaproszenie.",
+  "oczekiwane": "Link zaproszenia z przyciskami Kopiuj/SMS/E-mail; po przyjęciu w wersji testowej z Supabase – link logowania na e-mail, bez Supabase – od razu panel. Nowa osoba na liście zespołu.",
+  "urzadzenie": "komputer"
+ },
+ {
+  "id": "Z15",
+  "obszar": "Zakład",
+  "nazwa": "Odebranie dostępu",
+  "konto": "Anna Cichońska",
+  "kroki": "Zespół → przy nowej osobie Odbierz dostęp → Potwierdzam → Odbierz dostęp.",
+  "oczekiwane": "„Dostęp odebrany.”; przy następnym kliknięciu ta osoba trafia na stronę logowania.",
+  "urzadzenie": "komputer"
+ },
+ {
+  "id": "A1",
+  "obszar": "Administracja",
+  "nazwa": "Dodanie partnera",
+  "konto": "Ola Maj",
+  "kroki": "Zaloguj się → Dodaj partnera → nazwa, NIP (10 cyfr), miasto, adres, telefon, e-mail → Dodaj zakład.",
+  "oczekiwane": "Karta zakładu ze statusem „Do weryfikacji”; zakład nie pojawia się rodzinom. Ten sam NIP drugi raz – odmowa.",
+  "urzadzenie": "komputer"
+ },
+ {
+  "id": "A2",
+  "obszar": "Administracja",
+  "nazwa": "Zaproszenie właściciela",
+  "konto": "Ola Maj",
+  "kroki": "Karta zakładu → Zaproś do panelu (rola Właściciel) → wyślij link → właściciel przyjmuje i loguje się.",
+  "oczekiwane": "Właściciel w „Osoby w panelu”; po zalogowaniu widzi swój zakład, uzupełnia cennik.",
+  "urzadzenie": "komputer"
+ },
+ {
+  "id": "A3",
+  "obszar": "Administracja",
+  "nazwa": "Weryfikacja i wstrzymanie",
+  "konto": "Ola Maj",
+  "kroki": "Karta zakładu → zaznacz „Sprawdziłem dokumenty” → Zweryfikuj zakład; potem Wstrzymaj zakład.",
+  "oczekiwane": "Po weryfikacji (i z pełnym cennikiem) zakład jest na liście ofert; po wstrzymaniu znika i nie dostaje zapytań.",
+  "urzadzenie": "komputer"
+ },
+ {
+  "id": "A4",
+  "obszar": "Administracja",
+  "nazwa": "Zapytania do opiekuna",
+  "konto": "Ola Maj",
+  "kroki": "Do opiekuna → zadzwoń (fikcyjny numer) → notatka → Oznacz jako obsłużone.",
+  "oczekiwane": "Zapytanie Renaty Testowej z telefonem; po oznaczeniu przechodzi do „Obsłużone w ostatnim tygodniu”.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "A5",
+  "obszar": "Administracja",
+  "nazwa": "Rozliczenia i dostęp",
+  "konto": "Ola Maj, potem Anna",
+  "kroki": "Rozliczenia (bieżący miesiąc) → potem zaloguj się jako Anna i otwórz /admin.",
+  "oczekiwane": "Lista zakładów z liczbą zleceń i kwotą do faktury; Anna nie wchodzi do administracji.",
+  "urzadzenie": "komputer"
+ },
+ {
+  "id": "L1",
+  "obszar": "Logowanie",
+  "nazwa": "Konto testowe",
+  "konto": "dowolne",
+  "kroki": "/logowanie → kliknij osobę z listy.",
+  "oczekiwane": "Panel zakładu tej osoby. Lista kont widoczna tylko przy DEMO_MODE=true.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "L2",
+  "obszar": "Logowanie",
+  "nazwa": "Link z e-maila",
+  "konto": "konto założone w Supabase",
+  "kroki": "/logowanie → wpisz e-mail → Wyślij link → w mailu Zaloguj się do Ostoi → Zaloguj się.",
+  "oczekiwane": "Panel zakładu. Ten sam link drugi raz i po godzinie nie działa.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "L3",
+  "obszar": "Logowanie",
+  "nazwa": "Panel bez logowania",
+  "konto": "brak",
+  "kroki": "W oknie prywatnym otwórz /panel/zlecenia.",
+  "oczekiwane": "Przekierowanie na /logowanie.",
+  "urzadzenie": "komputer"
+ },
+ {
+  "id": "P1",
+  "obszar": "Powiadomienia",
+  "nazwa": "Push o nowym zapytaniu",
+  "konto": "Anna Cichońska",
+  "kroki": "Na telefonie: Zapytania → Włącz powiadomienia → zezwól → zablokuj telefon. Na komputerze wyślij zapytanie do Ciszy (R4).",
+  "oczekiwane": "W ciągu minuty na ekranie blokady „Nowe zapytanie – odpowiedz w 15 minut” z rodzajem pogrzebu i miastem, bez danych rodziny. Kliknięcie otwiera skrzynkę.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "P2",
+  "obszar": "Powiadomienia",
+  "nazwa": "Push na iPhonie",
+  "konto": "Anna Cichońska",
+  "kroki": "Safari → Udostępnij → Do ekranu początkowego → otwórz panel z ikony → powtórz P1.",
+  "oczekiwane": "Jak P1 (wymaga iOS 16.4 lub nowszego).",
+  "urzadzenie": "iPhone"
+ },
+ {
+  "id": "P3",
+  "obszar": "Powiadomienia",
+  "nazwa": "Prawdziwy SMS (opcjonalnie)",
+  "konto": "Anna Cichońska",
+  "kroki": "Ustaw SMSAPI_TOKEN i SMSAPI_TEST=false → w zleceniu testowym wpisz własny numer → Wyślij SMS z linkiem.",
+  "oczekiwane": "SMS z linkiem dla rodziny na Twój telefon; status „wysłano”.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "B1",
+  "obszar": "Prywatność",
+  "nazwa": "Nieprawidłowy link rodziny",
+  "konto": "bez logowania",
+  "kroki": "Otwórz /r/nieprawidlowy-link-0000000000.",
+  "oczekiwane": "„Ten link wygasł albo jest nieprawidłowy.” i telefon do opiekuna; żadnych danych.",
+  "urzadzenie": "telefon"
+ },
+ {
+  "id": "B2",
+  "obszar": "Prywatność",
+  "nazwa": "Fałszywy komunikat w adresie",
+  "konto": "bez logowania",
+  "kroki": "Otwórz /r/demo-rodzina-mazur-0000000000000000000000000000?ok=Zadzwon-pod-600000000.",
+  "oczekiwane": "Strona nie pokazuje tekstu z adresu (komunikaty tylko z listy aplikacji).",
+  "urzadzenie": "komputer"
+ }
 ]
