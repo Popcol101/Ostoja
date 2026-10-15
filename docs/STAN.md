@@ -78,13 +78,14 @@ Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, pan
    - Supabase (projekt iarvcirfxjlyxpicnxyr, Frankfurt): wszystkie migracje do 800 i dane testowe wgrane (6 zakładów).
      Doradca bezpieczeństwa: zostały tylko uwagi zamierzone (funkcje strony dla rodzin dla anon, funkcje panelu dla
      authenticated – każda sprawdza auth.uid()) i „RLS bez polityk” dla tabel dostępnych wyłącznie przez funkcje.
-   - Vercel: projekt „ostoja” (zespół ostoja, region fra1) założony przez konektor ze wszystkimi zmiennymi oprócz
-     DATABASE_URL i SUPABASE_SERVICE_ROLE_KEY (wpisuje je właściciel). Brakuje połączenia z GitHubem:
-     konto Vercel nie ma jeszcze Login Connection do GitHuba, więc repozytorium trzeba podpiąć ręcznie
-     (Settings → Git). Bez DATABASE_URL build się nie uda (src/lib/db.ts).
-   - Po pierwszym wdrożeniu: poprawić APP_URL i VAPID_SUBJECT na faktyczny adres, uruchomić
-     scripts/supabase/harmonogram-powiadomien.sql (ten sam CRON_SECRET), w Supabase Auth wyłączyć rejestrację,
-     ustawić Site URL i Redirect URLs na adres aplikacji.
+   - Vercel: projekt „ostoja” (zespół ostoja, region fra1), połączony z GitHubem, wdraża się po każdym pushu na main.
+     Adres: https://ostoja-cyan.vercel.app (ostoja.vercel.app było zajęte). Wszystkie zmienne ustawione,
+     DATABASE_URL (Session pooler, rola postgres) i SUPABASE_SERVICE_ROLE_KEY jako Sensitive.
+     Sprawdzone 15.10: logowanie demo, panel zakładu, odczyt z bazy.
+   - Harmonogram w Supabase (pg_cron + pg_net, sekret w Vault): ostoja-expire-offers, ostoja-powiadomienia (co minutę),
+     ostoja-retencja (codziennie 3:15 UTC).
+   - Do zrobienia przez właściciela: Supabase → Authentication → wyłączyć rejestrację (Allow new users to sign up),
+     Site URL i Redirect URLs = https://ostoja-cyan.vercel.app; szablon e-maila Magic Link po polsku.
 2. Przejść scenariusze z arkusza z 1–2 zakładami; uwagi do zakładki Spotkania, błędy do zakładki Błędy.
 3. Przegląd prawny: docs/prawne/Ostoja-RODO-i-bezpieczenstwo-szkic.docx, /prywatnosc, /regulamin; umowy DPA z dostawcami.
 4. Do dopracowania: uzasadnienie przy wstrzymaniu zakładu (P2B), procedura naruszeń i realizacji praw osób,
