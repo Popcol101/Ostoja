@@ -19,9 +19,16 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
   const emailLogin = emailLoginEnabled();
   const accounts = demo
     ? await sql<Account[]>`
-        select m.user_id, u.email, m.display_name, m.role, h.name as home_name
-        from memberships m join auth.users u on u.id = m.user_id join funeral_homes h on h.id = m.home_id
-        order by h.name, m.role`
+        select * from (
+          select m.user_id, u.email, m.display_name, m.role::text as role, h.name as home_name, 0 as ord
+          from memberships m join auth.users u on u.id = m.user_id join funeral_homes h on h.id = m.home_id
+          union all
+          select p.user_id, u.email, p.display_name, 'admin', 'Ostoja – administracja', 1
+          from platform_admins p join auth.users u on u.id = p.user_id
+        ) a
+        -- Tylko konta testowe (@….test): prawdziwe konta pilotażowe logują się wyłącznie linkiem z e-maila.
+        where a.email like '%.test'
+        order by a.ord, a.home_name, a.role`
     : [];
 
   return (

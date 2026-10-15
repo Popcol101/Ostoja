@@ -80,3 +80,14 @@ export async function requireMember(): Promise<Membership> {
     acceptingToday: m.accepting_today,
   };
 }
+
+export type Admin = { userId: string; displayName: string };
+
+/** Sesja administratora Ostoi (tabela platform_admins); inaczej przekierowuje na logowanie. */
+export async function requireAdmin(): Promise<Admin> {
+  const userId = await getUserId();
+  if (!userId) redirect("/logowanie");
+  const [row] = await withUser(userId, (tx) => tx<{ name: string | null }[]>`select admin_me() as name`);
+  if (!row?.name) redirect("/logowanie?blad=brak-uprawnien-admina");
+  return { userId, displayName: row.name };
+}

@@ -64,6 +64,18 @@ export const MESSAGES = {
   "brak-zaproszenia": "Nie znaleziono zaproszenia",
   "nie-siebie": "Nie możesz usunąć własnego dostępu",
   "brak-osoby": "Nie znaleziono osoby w Twoim zakładzie",
+  // Administracja
+  "brak-uprawnien-admina": "Ten panel jest tylko dla administratorów Ostoi.",
+  "tylko-admin": "Tylko dla administratorów Ostoi",
+  "partner-dodany": "Zakład dodany. Uzupełnij zaproszenie dla właściciela, a po sprawdzeniu dokumentów zweryfikuj zakład.",
+  "zaklad-zweryfikowany": "Zakład zweryfikowany. Rodziny widzą go na liście ofert.",
+  "zaklad-wstrzymany": "Zakład wstrzymany. Rodziny go nie widzą i nie dostaje zapytań.",
+  "zapytanie-obsluzone": "Zapytanie oznaczone jako obsłużone.",
+  "zapytanie-juz-obsluzone": "Zapytanie jest już obsłużone",
+  "zly-nip": "NIP ma 10 cyfr",
+  "nip-zajety": "Zakład z tym NIP-em już jest w Ostoi",
+  "brak-zakladu-admin": "Nie znaleziono zakładu",
+  "tylko-link": "To konto loguje się linkiem z e-maila.",
   "blad-zapisu": "Nie udało się zapisać. Spróbuj ponownie albo zadzwoń do opiekuna Ostoi.",
 } as const;
 

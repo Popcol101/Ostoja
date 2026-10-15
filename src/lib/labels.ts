@@ -69,6 +69,7 @@ export const ROLE_LABEL: Record<string, string> = {
   wlasciciel: "Właściciel",
   biuro: "Biuro",
   ekipa: "Ekipa",
+  admin: "Administrator Ostoi",
 };
 
 /** Zasiłek pogrzebowy z ZUS od 1 stycznia 2026 r. */

@@ -27,7 +27,8 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-4000-8000-000000000002', 'ewa@cisza.test',      '{"name":"Ewa Rogalska"}'),
   ('00000000-0000-4000-8000-000000000003', 'adam@cisza.test',     '{"name":"Adam Sowiński"}'),
   ('00000000-0000-4000-8000-000000000004', 'piotr@podlipami.test','{"name":"Piotr Lipski"}'),
-  ('00000000-0000-4000-8000-000000000005', 'kasia@kalina.test',   '{"name":"Katarzyna Kalinowska"}')
+  ('00000000-0000-4000-8000-000000000005', 'kasia@kalina.test',   '{"name":"Katarzyna Kalinowska"}'),
+  ('00000000-0000-4000-8000-000000000009', 'ola@ostoja.test',     '{"name":"Ola Maj"}')
 on conflict (id) do nothing; -- reset wersji testowej zostawia konta w auth.users
 
 insert into funeral_homes (id, slug, name, nip, city_slug, address, phone, email, description,
@@ -124,6 +125,12 @@ begin
     (i1, '00000000-0000-4000-a000-000000000002', 6350, 4.1, now() - interval '2 minutes', now() + interval '13 minutes'),
     (i1, '00000000-0000-4000-a000-000000000003', 4980, 7.8, now() - interval '2 minutes', now() + interval '13 minutes');
 
+  -- Zapytanie, którego nie przyjął żaden zakład (3 rundy) – czeka na telefon opiekuna Ostoi.
+  insert into inquiries (city_slug, burial, ceremony, place_of_death, budget, contact_name, contact_phone,
+                         status, dispatch_round, created_at)
+  values ('krakow', 'tradycyjny', 'swiecka', 'dom', 'nie_wiem', 'Renata Testowa', '+48 500 100 299',
+          'do_opiekuna', 3, now() - interval '50 minutes');
+
   -- Zapytania już przyjęte przez Ciszę.
   insert into inquiries (id, city_slug, burial, ceremony, place_of_death, contact_name, contact_phone, status, created_at) values
     (i2, 'lodz', 'kremacja',   'swiecka',   'szpital', 'Piotr Nowak',     '+48 500 100 201', 'przyjete', now() - interval '1 day 3 hours'),
@@ -211,3 +218,8 @@ begin
     (cisza, ewa,  tstzrange(d0 + interval '1 day 20 hours', d0 + interval '2 days 8 hours')),
     (cisza, adam, tstzrange(d0 + interval '2 days 20 hours', d0 + interval '3 days 8 hours'));
 end $$;
+
+-- Administratorka Ostoi (opiekunka partnerów) – panel /admin.
+insert into platform_admins (user_id, display_name) values
+  ('00000000-0000-4000-8000-000000000009', 'Ola Maj')
+on conflict (user_id) do nothing;

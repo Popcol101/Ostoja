@@ -1,9 +1,9 @@
-import { Mail, MessageSquare } from "lucide-react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { CopyButton, SubmitButton } from "@/components/client";
+import { SubmitButton } from "@/components/client";
+import { InviteLinkCard, parseInviteCookie } from "@/components/invite-link";
 import { Flash, type SearchParams } from "@/components/flash";
-import { Badge, Card, CardTitle, EmptyState, Field, Input, LinkButton, Notice, PageTitle, Select } from "@/components/ui";
+import { Badge, Card, CardTitle, EmptyState, Field, Input, Notice, PageTitle, Select } from "@/components/ui";
 import { withUser } from "@/lib/db";
 import { formatDate } from "@/lib/format";
 import { ROLE_LABEL } from "@/lib/labels";
@@ -17,17 +17,6 @@ export const dynamic = "force-dynamic";
 type Member = { user_id: string; display_name: string; email: string; role: string; is_me: boolean };
 type Invitation = { id: string; email: string; role: string; display_name: string; created_at: Date; expires_at: Date };
 
-function freshInvite(raw: string | undefined): { token: string; name: string; email: string } | null {
-  if (!raw) return null;
-  try {
-    const v = JSON.parse(raw) as { token?: unknown; name?: unknown; email?: unknown };
-    if (typeof v.token === "string" && /^[A-Za-z0-9_-]{40,60}$/.test(v.token) && typeof v.name === "string" && typeof v.email === "string") {
-      return { token: v.token, name: v.name, email: v.email };
-    }
-  } catch {}
-  return null;
-}
-
 export default async function TeamPage({ searchParams }: { searchParams: SearchParams }) {
   const me = await requireMember();
   const owner = me.role === "wlasciciel";
@@ -35,12 +24,8 @@ export default async function TeamPage({ searchParams }: { searchParams: SearchP
     members: await tx<Member[]>`select * from team_members()`,
     invitations: owner ? await tx<Invitation[]>`select * from team_invitations()` : [],
   }));
-  const fresh = owner ? freshInvite((await cookies()).get(INVITE_COOKIE)?.value) : null;
+  const fresh = owner ? parseInviteCookie((await cookies()).get(INVITE_COOKIE)?.value) : null;
   const freshUrl = fresh ? inviteLink(fresh.token) : null;
-  const message = fresh
-    ? `Dzień dobry, zapraszam Cię do panelu Ostoi naszego zakładu (${me.homeName}). Otwórz link i kliknij „Przyjmij zaproszenie”: ${freshUrl}`
-    : "";
-
   return (
     <>
       <PageTitle sub={`${members.length} ${members.length === 1 ? "osoba ma" : members.length < 5 ? "osoby mają" : "osób ma"} dostęp do panelu`}>
@@ -48,28 +33,7 @@ export default async function TeamPage({ searchParams }: { searchParams: SearchP
       </PageTitle>
       <Flash searchParams={searchParams} />
 
-      {fresh && freshUrl ? (
-        <Card className="mb-4 border-brand">
-          <CardTitle>Link zaproszenia dla: {fresh.name}</CardTitle>
-          <p className="mb-3 text-[15px] text-muted">
-            Wyślij go tylko tej osobie. Link jest ważny 7 dni i działa raz. Po przyjęciu {fresh.email} zaloguje się linkiem z e-maila.
-          </p>
-          <p className="mb-3 break-all rounded-[10px] bg-ground-family px-3 py-2.5 font-mono text-[13px]">{freshUrl}</p>
-          <div className="flex flex-wrap gap-2">
-            <CopyButton text={freshUrl} />
-            <LinkButton variant="secondary" href={`sms:?body=${encodeURIComponent(message)}`} prefetch={false}>
-              <MessageSquare size={18} aria-hidden="true" /> Wyślij SMS-em
-            </LinkButton>
-            <LinkButton
-              variant="secondary"
-              href={`mailto:${fresh.email}?subject=${encodeURIComponent("Zaproszenie do panelu Ostoi")}&body=${encodeURIComponent(message)}`}
-              prefetch={false}
-            >
-              <Mail size={18} aria-hidden="true" /> Wyślij e-mailem
-            </LinkButton>
-          </div>
-        </Card>
-      ) : null}
+      {fresh && freshUrl ? <InviteLinkCard url={freshUrl} name={fresh.name} email={fresh.email} homeName={me.homeName} /> : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <Card>
