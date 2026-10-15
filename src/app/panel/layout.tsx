@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Mark } from "@/components/site";
 import { OfflineBanner } from "@/components/client";
 import { withUser } from "@/lib/db";
 import { ROLE_LABEL } from "@/lib/labels";
@@ -18,16 +19,8 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       <header className="bg-night text-white print:hidden">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3 lg:px-6">
           <Link href="/panel/zapytania" className="flex items-center gap-3 text-white no-underline">
-            <span
-              aria-hidden="true"
-              className="flex size-10 items-center justify-center rounded-[10px] bg-brand font-bold"
-            >
-              {me.homeName
-                .split(" ")
-                .filter((w) => w.length > 2)
-                .slice(-2)
-                .map((w) => w[0])
-                .join("")}
+            <span aria-hidden="true" className="flex size-10 items-center justify-center rounded-[10px] bg-brand">
+              <Mark size={26} onDark />
             </span>
             <span className="flex flex-col leading-tight">
               <span className="font-semibold">{me.homeName}</span>
@@ -42,7 +35,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
                 type="submit"
                 role="switch"
                 aria-checked={me.acceptingToday}
-                className="flex min-h-11 items-center gap-3 rounded-xl border border-night-line bg-[#22302C] px-3 text-left"
+                className="flex min-h-11 items-center gap-3 rounded-xl border border-night-line bg-night-raised px-3 text-left"
               >
                 <span className="flex flex-col">
                   <span className="text-sm font-semibold">
@@ -55,7 +48,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
                 <span
                   aria-hidden="true"
                   className={`flex h-7 w-12 items-center rounded-full p-[3px] ${
-                    me.acceptingToday ? "justify-end bg-[#4F8A76]" : "justify-start bg-muted"
+                    me.acceptingToday ? "justify-end bg-night-on" : "justify-start bg-muted"
                   }`}
                 >
                   <span className="size-[22px] rounded-full bg-white" />

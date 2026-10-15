@@ -44,7 +44,7 @@ export function PanelNav({ variant, newCount }: { variant: "side" | "bottom"; ne
                 <span className="flex-1">{label}</span>
                 <PendingMark />
                 {href === "/panel/zapytania" && newCount > 0 ? (
-                  <span className="rounded-full bg-warn px-2 text-[13px] text-white">
+                  <span className="rounded-full bg-warn-ink px-2 text-[13px] text-white">
                     {newCount}
                     <span className="sr-only"> nowe</span>
                   </span>
@@ -78,7 +78,7 @@ export function PanelNav({ variant, newCount }: { variant: "side" | "bottom"; ne
                 {label === "Profil i cennik" ? "Profil" : label}
                 <PendingMark className="absolute bottom-0" />
                 {href === "/panel/zapytania" && newCount > 0 ? (
-                  <span className="absolute right-[calc(50%-22px)] top-0 min-w-5 rounded-full bg-warn px-1 text-center text-[11px] font-bold text-white">
+                  <span className="absolute right-[calc(50%-22px)] top-0 min-w-5 rounded-full bg-warn-ink px-1 text-center text-[11px] font-bold text-white">
                     {newCount}
                     <span className="sr-only"> nowe</span>
                   </span>

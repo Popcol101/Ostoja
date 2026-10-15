@@ -1,24 +1,32 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ground: #eef0ec;
-  --color-ground-family: #f3f4f1;
+  /* Paleta „stonowana” – zielenie i piasek złamane szarością. Opis: docs/identyfikacja-wizualna.md */
+  --color-ground: #ecedeb;
+  --color-ground-family: #f4f4f2;
   --color-card: #ffffff;
-  --color-line: #d9ddd6;
-  --color-line-soft: #e6e9e4;
-  --color-ink: #17211e;
-  --color-muted: #55615c;
-  --color-brand: #24453c;
-  --color-brand-dark: #16302a;
-  --color-brand-tint: #e3ece8;
-  --color-warn: #b9802a;
-  --color-warn-ink: #7a5214;
-  --color-warn-tint: #f6eddc;
-  --color-danger: #9b2c24;
-  --color-danger-tint: #f7e4e1;
-  --color-night: #17211e;
-  --color-night-line: #3a4a45;
-  --color-night-muted: #aebbb6;
+  --color-line: #d8dad7;
+  --color-line-soft: #e5e7e4;
+  --color-field: #878e8a;
+  --color-placeholder: #6b726f;
+  --color-ink: #1e2422;
+  --color-muted: #5c6461;
+  --color-brand: #3f5650;
+  --color-brand-dark: #2f423d;
+  --color-brand-tint: #e6eae8;
+  --color-sand: #a68b5b;
+  --color-sand-light: #cdb98f;
+  --color-warn: #a68b5b;
+  --color-warn-ink: #6e5a33;
+  --color-warn-tint: #f1ece2;
+  --color-danger: #8e3b33;
+  --color-danger-tint: #f3e6e3;
+  --color-night: #1e2422;
+  --color-night-raised: #2a3230;
+  --color-night-line: #3b4441;
+  --color-night-text: #c9cecb;
+  --color-night-muted: #aeb6b2;
+  --color-night-on: #7fa295;
 
   --font-sans: "Figtree Variable", "Figtree", system-ui, sans-serif;
   --font-serif: "Newsreader Variable", "Newsreader", Georgia, serif;

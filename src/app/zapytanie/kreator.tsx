@@ -114,7 +114,7 @@ export function Kreator({ cities, initial }: { cities: City[]; initial: Record<s
           required
           value={values.miasto ?? ""}
           onChange={(e) => set("miasto", e.target.value)}
-          className="min-h-12 w-full rounded-[10px] border border-[#B8C0B9] bg-card px-3.5 text-[16px]"
+          className="min-h-12 w-full rounded-[10px] border border-field bg-card px-3.5 text-[16px]"
         >
           <option value="">Wybierz miasto</option>
           {cities.map((c) => (

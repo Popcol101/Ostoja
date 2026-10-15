@@ -335,7 +335,7 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
                       <span
                         aria-hidden="true"
                         className={`flex size-6 shrink-0 items-center justify-center rounded-full border-[1.5px] ${
-                          t.done ? "border-brand bg-brand text-white" : "border-[#8C9792]"
+                          t.done ? "border-brand bg-brand text-white" : "border-field"
                         }`}
                       >
                         {t.done ? <Check size={15} /> : null}

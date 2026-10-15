@@ -33,8 +33,11 @@ Zakres i bolączki: docs/zakres-panelu-v1.md (do dodania z dokumentu „Ostoja �
 - Z Dockerem możesz zamiast tego używać `npx supabase start` / `db reset` / `test db`.
 
 ## Wygląd (nadrzędny wobec wszystkich skilli)
-Tło #EEF0EC (panel) / #F3F4F1 (rodziny), karty #FFFFFF z obramowaniem #D9DDD6, nagłówek panelu #17211E.
-Kolor główny #24453C, jasny akcent #E3ECE8, ostrzeżenia #B9802A (tekst ostrzeżeń #7A5214), tekst #17211E i #55615C.
+Pełna księga znaku: docs/identyfikacja-wizualna.md. Pliki logo: public/brand/ (generuje scripts/brand/build_logo.py).
+Paleta stonowana (zieleń i piasek złamane szarością): tło #ECEDEB (panel) / #F4F4F2 (rodziny), karty #FFFFFF
+z obramowaniem #D8DAD7, nagłówek panelu #1E2422. Kolor główny #3F5650, jasny akcent #E6EAE8,
+piasek #A68B5B (akcent, ostrzeżenia; tekst ostrzeżeń #6E5A33), tekst #1E2422 i #5C6461.
+Znak: łuk bramy i prosta linia drogi – nie zmieniaj proporcji, nie dodawaj elementów.
 Fonty: Newsreader (nagłówki), Figtree (interfejs). Zaokrąglenia 10–16 px.
 Bez emoji, gradientów, cieni i „kart z kolorowym lewym brzegiem”.
 

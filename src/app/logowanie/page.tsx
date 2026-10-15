@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { param, type SearchParams } from "@/components/flash";
+import { Logo } from "@/components/site";
 import { Notice } from "@/components/ui";
 import { sql } from "@/lib/db";
 import { ROLE_LABEL } from "@/lib/labels";
@@ -35,7 +36,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
     <main className="min-h-dvh bg-ground px-4 py-10">
       <div className="mx-auto flex max-w-md flex-col gap-5">
         <div>
-          <p className="font-serif text-[26px]">Ostoja</p>
+          <Logo />
           <h1 className="mt-4 font-serif text-[32px] leading-tight">Panel zakładu pogrzebowego</h1>
         </div>
         {error ? (

@@ -3,18 +3,18 @@ import { Badge, Button, Card, CardTitle, DefinitionList, EmptyState, Field, Inpu
 
 export const metadata: Metadata = { title: "System wizualny – Ostoja", robots: { index: false } };
 
-const COLORS: { name: string; token: string; hex: string; dark?: boolean }[] = [
-  { name: "Tło panelu", token: "ground", hex: "#EEF0EC" },
-  { name: "Tło strony dla rodzin", token: "ground-family", hex: "#F3F4F1" },
+const COLORS: { name: string; token: string; hex: string }[] = [
+  { name: "Kamień – tło panelu", token: "ground", hex: "#ECEDEB" },
+  { name: "Mgła – tło dla rodzin", token: "ground-family", hex: "#F4F4F2" },
   { name: "Karta", token: "card", hex: "#FFFFFF" },
-  { name: "Obramowanie", token: "line", hex: "#D9DDD6" },
-  { name: "Tekst", token: "ink", hex: "#17211E", dark: true },
-  { name: "Tekst drugorzędny", token: "muted", hex: "#55615C", dark: true },
-  { name: "Kolor główny", token: "brand", hex: "#24453C", dark: true },
-  { name: "Jasny akcent", token: "brand-tint", hex: "#E3ECE8" },
-  { name: "Ostrzeżenie", token: "warn", hex: "#B9802A", dark: true },
-  { name: "Tekst ostrzeżenia", token: "warn-ink", hex: "#7A5214", dark: true },
-  { name: "Nagłówek panelu", token: "night", hex: "#17211E", dark: true },
+  { name: "Linia", token: "line", hex: "#D8DAD7" },
+  { name: "Grafit – tekst", token: "ink", hex: "#1E2422" },
+  { name: "Popiel – tekst drugorzędny", token: "muted", hex: "#5C6461" },
+  { name: "Szałwia – kolor główny", token: "brand", hex: "#3F5650" },
+  { name: "Szałwia jasna", token: "brand-tint", hex: "#E6EAE8" },
+  { name: "Piasek – akcent i ostrzeżenia", token: "sand", hex: "#A68B5B" },
+  { name: "Piasek ciemny – tekst ostrzeżeń", token: "warn-ink", hex: "#6E5A33" },
+  { name: "Noc – nagłówek panelu", token: "night", hex: "#1E2422" },
 ];
 
 export default function Styleguide() {
@@ -22,7 +22,7 @@ export default function Styleguide() {
     <main className="mx-auto flex max-w-5xl flex-col gap-8 bg-ground px-4 py-8">
       <div>
         <h1 className="font-serif text-[36px]">System wizualny Ostoi</h1>
-        <p className="text-muted">Komponenty z src/components/ui.tsx. Zasady: docs/design-system.md.</p>
+        <p className="text-muted">Komponenty z src/components/ui.tsx. Zasady: docs/identyfikacja-wizualna.md i docs/design-system.md.</p>
       </div>
 
       <Card>

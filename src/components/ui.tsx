@@ -104,7 +104,7 @@ export function Field({
 }
 
 const inputBase =
-  "min-h-12 w-full rounded-[10px] border border-[#B8C0B9] bg-card px-3.5 text-[16px] text-ink placeholder:text-[#707C77]";
+  "min-h-12 w-full rounded-[10px] border border-field bg-card px-3.5 text-[16px] text-ink placeholder:text-placeholder";
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
   return <input className={cx(inputBase, className)} {...props} />;
@@ -120,7 +120,7 @@ export function Textarea({ className, ...props }: ComponentProps<"textarea">) {
 
 export function EmptyState({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="rounded-[14px] border border-dashed border-[#B8C0B9] bg-card px-5 py-8 text-center">
+    <div className="rounded-[14px] border border-dashed border-field bg-card px-5 py-8 text-center">
       <p className="text-[17px] font-semibold">{title}</p>
       {children ? <div className="mx-auto mt-1 max-w-md text-muted">{children}</div> : null}
       {action ? <div className="mt-4">{action}</div> : null}
