@@ -1,11 +1,13 @@
 "use server";
 // Akcje serwerowe panelu zakładu. Każda: sesja → walidacja zod → zapytanie przez withUser (RLS).
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { RedirectType, redirect } from "next/navigation";
 import { z } from "zod";
 import { userFacingDbError, withUser } from "@/lib/db";
 import { slugify, warsawToUtc } from "@/lib/format";
 import { withMessage } from "@/lib/messages";
+import { processOutbox } from "@/lib/notify";
 import { destroySession, requireMember } from "@/lib/session";
 
 const uuid = z.guid({ message: "Nieprawidłowy identyfikator" });
@@ -56,6 +58,7 @@ export async function declineOffer(formData: FormData) {
   const offerId = uuid.parse(formData.get("offerId"));
   const res = await attempt(() => withUser(me.userId, (tx) => tx`select decline_offer(${offerId})`));
   if (!res.ok) back("/panel/zapytania", res.message);
+  after(() => processOutbox()); // zapytanie poszło do kolejnych zakładów – powiadom je od razu
   revalidatePath("/panel/zapytania");
   back("/panel/zapytania", "Zapytanie trafi do innego zakładu.", "ok");
 }
@@ -268,4 +271,41 @@ export async function updatePrices(formData: FormData) {
   });
   revalidatePath("/panel/profil");
   back("/panel/profil", "Zapisano cennik.", "ok");
+}
+
+// --- Powiadomienia -------------------------------------------------------------------------
+
+export async function sendFamilySms(formData: FormData) {
+  const me = await requireMember();
+  const orderId = uuid.parse(formData.get("orderId"));
+  const res = await attempt(() => withUser(me.userId, (tx) => tx`select queue_family_sms(${orderId})`));
+  if (!res.ok) back(`/panel/zlecenia/${orderId}`, res.message);
+  after(() => processOutbox());
+  revalidatePath(`/panel/zlecenia/${orderId}`);
+  back(`/panel/zlecenia/${orderId}`, "SMS z linkiem jest w drodze do rodziny.", "ok");
+}
+
+const subscriptionSchema = z.object({
+  endpoint: z.url().startsWith("https://").max(1000),
+  keys: z.object({ p256dh: z.string().min(40).max(200), auth: z.string().min(10).max(100) }),
+});
+
+/** Zapisuje subskrypcję push tego urządzenia (wywoływane z przeglądarki po zgodzie użytkownika). */
+export async function savePushSubscription(raw: unknown, device: string): Promise<{ ok: boolean }> {
+  const me = await requireMember();
+  const parsed = subscriptionSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false };
+  const { endpoint, keys } = parsed.data;
+  await withUser(me.userId, (tx) => tx`
+    insert into push_subscriptions (user_id, home_id, endpoint, p256dh, auth, device)
+    values (${me.userId}, ${me.homeId}, ${endpoint}, ${keys.p256dh}, ${keys.auth}, ${device.slice(0, 120)})
+    on conflict (endpoint) do nothing`);
+  return { ok: true };
+}
+
+export async function removePushSubscription(endpoint: string): Promise<{ ok: boolean }> {
+  const me = await requireMember();
+  if (typeof endpoint !== "string" || endpoint.length > 1000) return { ok: false };
+  await withUser(me.userId, (tx) => tx`delete from push_subscriptions where endpoint = ${endpoint}`);
+  return { ok: true };
 }

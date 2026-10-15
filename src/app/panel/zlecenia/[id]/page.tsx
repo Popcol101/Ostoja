@@ -24,7 +24,7 @@ import {
   type OrderStage,
 } from "@/lib/labels";
 import { requireMember } from "@/lib/session";
-import { publishMemorial, setEventStatus, setStage, signContract, toggleTask, updateOrderDetails } from "../../actions";
+import { publishMemorial, sendFamilySms, setEventStatus, setStage, signContract, toggleTask, updateOrderDetails } from "../../actions";
 import { EventForm, type Resource } from "../../event-form";
 
 export const metadata: Metadata = { title: "Karta zlecenia" };
@@ -69,6 +69,15 @@ type Ev = {
   warning: string | null;
 };
 
+type Sms = { status: "oczekuje" | "wyslano" | "blad" | "pominieto"; last_error: string | null; created_at: Date; sent_at: Date | null };
+
+const SMS_STATUS: Record<Sms["status"], string> = {
+  oczekuje: "w kolejce",
+  wyslano: "wysłany",
+  blad: "błąd – ponowimy",
+  pominieto: "nie wysłano",
+};
+
 export default async function OrderPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: SearchParams }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
@@ -93,16 +102,19 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
       select id, kind, title, status, starts_at, ends_at, place, resource_names, warning
       from calendar_events where order_id = ${id} order by starts_at`;
     const resources = await tx<Resource[]>`select id, name from resources order by kind, name`;
-    return { order, items, tasks, events, resources };
+    const sms = await tx<Sms[]>`
+      select status, last_error, created_at, sent_at from notifications
+      where order_id = ${id} and kind = 'link_dla_rodziny' order by created_at desc limit 3`;
+    return { order, items, tasks, events, resources, sms };
   });
   if (!data) notFound();
-  const { order: o, items, tasks, events, resources } = data;
+  const { order: o, items, tasks, events, resources, sms } = data;
 
   const h = await headers();
   const origin = process.env.APP_URL ?? `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
   const familyUrl = `${origin}/r/${o.family_token}`;
   const name = [o.deceased_first_name, o.deceased_last_name].filter(Boolean).join(" ");
-  const smsBody = `Dzień dobry, tu ${me.homeName}. Pod tym linkiem uzupełnią Państwo dane do dokumentów i wybiorą usługi: ${familyUrl}`;
+  const smsBody = `Dzień dobry, tu ${me.homeName}. Terminy, koszty i dane do dokumentów: ${familyUrl}`;
   const path = `/panel/zlecenia/${o.id}`;
   const visibleStages = STAGES.filter((s) => s !== "zamkniete");
   const stageIndex = STAGES.indexOf(o.stage);
@@ -171,15 +183,30 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
             </p>
             <p className="mb-3 break-all rounded-[10px] bg-ground-family px-3 py-2 font-mono text-[13px]">{familyUrl}</p>
             <div className="flex flex-wrap gap-2">
+              <form action={sendFamilySms}>
+                <input type="hidden" name="orderId" value={o.id} />
+                <SubmitButton pendingLabel="Wysyłam…">Wyślij SMS z linkiem</SubmitButton>
+              </form>
               <CopyButton text={familyUrl} />
               <LinkButton
                 href={`sms:${o.principal_phone.replace(/\s/g, "")}?body=${encodeURIComponent(smsBody)}`}
-                variant="secondary"
+                variant="quiet"
                 prefetch={false}
               >
-                Wyślij SMS-em
+                Z mojego telefonu
               </LinkButton>
             </div>
+            {sms.length ? (
+              <ul className="mt-3 flex flex-col gap-1 border-t border-line-soft pt-3 text-[14px]" aria-label="Wysłane SMS-y">
+                {sms.map((m) => (
+                  <li key={m.created_at.toISOString()}>
+                    <span className="text-muted">SMS {formatDateTime(m.created_at)}: </span>
+                    <span className={m.status === "wyslano" ? "font-semibold text-brand" : "font-semibold text-warn-ink"}>{SMS_STATUS[m.status]}</span>
+                    {m.status === "pominieto" && m.last_error ? <span className="text-muted"> – {m.last_error}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </Card>
 
           <Card>

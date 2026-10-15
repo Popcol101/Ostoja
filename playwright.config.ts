@@ -18,11 +18,25 @@ export default defineConfig({
     { name: "telefon", use: { ...devices["Pixel 7"], viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, browserName: "chromium" } },
     { name: "komputer", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } } },
   ],
-  webServer: {
-    command: "npx next start -p 3100",
-    url: "http://localhost:3100",
-    reuseExistingServer: false,
-    timeout: 60_000,
-    env: { DEMO_MODE: "true" },
-  },
+  webServer: [
+    {
+      command: "node tests/e2e/mock-supabase.mjs",
+      url: "http://127.0.0.1:54399/health",
+      reuseExistingServer: false,
+      timeout: 10_000,
+    },
+    {
+      command: "npx next start -p 3100",
+      url: "http://localhost:3100",
+      reuseExistingServer: false,
+      timeout: 60_000,
+      env: {
+        DEMO_MODE: "true",
+        SUPABASE_URL: "http://127.0.0.1:54399",
+        SUPABASE_ANON_KEY: "test-anon-key",
+        APP_URL: "http://localhost:3100",
+        CRON_SECRET: "test-cron-secret-1234567890",
+      },
+    },
+  ],
 });

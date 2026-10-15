@@ -1,25 +1,14 @@
 "use server";
 // Akcje strony dla rodzin (bez logowania). Baza: tylko funkcje security definer w roli anon.
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
+import { after } from "next/server";
 import { RedirectType, redirect } from "next/navigation";
 import { z } from "zod";
 import { asAnon, userFacingDbError } from "@/lib/db";
 import { warsawToUtc } from "@/lib/format";
 import { withMessage } from "@/lib/messages";
-
-// Prosty limit zapytań na adres IP (w pamięci procesu). Na produkcji: Upstash/Redis lub tabela w bazie.
-const hits = new Map<string, number[]>();
-async function rateLimit(key: string, max: number, windowMs: number): Promise<boolean> {
-  const h = await headers();
-  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "local";
-  const id = `${key}:${ip}`;
-  const now = Date.now();
-  const recent = (hits.get(id) ?? []).filter((t) => now - t < windowMs);
-  recent.push(now);
-  hits.set(id, recent);
-  return recent.length <= max;
-}
+import { processOutbox } from "@/lib/notify";
+import { rateLimit } from "@/lib/rate-limit";
 
 const inquirySchema = z.object({
   miasto: z.string().min(2).max(40),
@@ -76,6 +65,7 @@ export async function createInquiry(formData: FormData) {
     if (!error) throw e;
   }
   if (error) redirect(withMessage(backTo, "blad", error), RedirectType.replace);
+  after(() => processOutbox()); // push do zakładu od razu, bez czekania na harmonogram
   redirect(
     `/zapytanie/wyslane?${new URLSearchParams({ miasto: d.miasto, forma: d.forma, ceremonia: d.ceremonia, miejsce: d.miejsce, dom: d.dom ?? "" })}`,
   );

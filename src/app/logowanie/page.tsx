@@ -1,31 +1,23 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { z } from "zod";
-import { param, type SearchParams } from "@/components/flash";
-import { Logo } from "@/components/site";
-import { Notice } from "@/components/ui";
+import { SubmitButton } from "@/components/client";
+import { Flash, type SearchParams } from "@/components/flash";
+import { Logo, OPIEKUN_PHONE } from "@/components/site";
+import { Field, Input, Notice } from "@/components/ui";
+import { emailLoginEnabled } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { ROLE_LABEL } from "@/lib/labels";
-import { createSession, demoModeEnabled } from "@/lib/session";
+import { demoModeEnabled } from "@/lib/session";
+import { loginDemo, sendLoginLink } from "./actions";
 
 export const metadata: Metadata = { title: "Logowanie do panelu" };
 export const dynamic = "force-dynamic";
 
 type Account = { user_id: string; email: string; display_name: string; role: string; home_name: string };
 
-async function loginDemo(formData: FormData) {
-  "use server";
-  if (!demoModeEnabled()) redirect("/logowanie?blad=demo-wylaczone");
-  const userId = z.guid().parse(formData.get("userId"));
-  const [m] = await sql<{ user_id: string }[]>`select user_id from memberships where user_id = ${userId} limit 1`;
-  if (!m) redirect("/logowanie?blad=brak-zakladu");
-  await createSession(m.user_id);
-  redirect("/panel/zapytania");
-}
-
 export default async function LoginPage({ searchParams }: { searchParams: SearchParams }) {
-  const error = await param(searchParams, "blad");
-  const accounts = demoModeEnabled()
+  const demo = demoModeEnabled();
+  const emailLogin = emailLoginEnabled();
+  const accounts = demo
     ? await sql<Account[]>`
         select m.user_id, u.email, m.display_name, m.role, h.name as home_name
         from memberships m join auth.users u on u.id = m.user_id join funeral_homes h on h.id = m.home_id
@@ -37,14 +29,22 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
       <div className="mx-auto flex max-w-md flex-col gap-5">
         <div>
           <Logo />
-          <h1 className="mt-4 font-serif text-[32px] leading-tight">Panel zakładu pogrzebowego</h1>
+          <h1 className="mt-6 font-serif text-[32px] leading-tight">Panel zakładu pogrzebowego</h1>
         </div>
-        {error ? (
-          <Notice tone="danger">
-            {error === "brak-zakladu" ? "To konto nie jest przypisane do żadnego zakładu." : "Logowanie testowe jest wyłączone."}
-          </Notice>
+        <Flash searchParams={searchParams} />
+
+        {emailLogin ? (
+          <form action={sendLoginLink} className="flex flex-col gap-4 rounded-[14px] border border-line bg-card p-5">
+            <Field id="email" label="Twój e-mail" hint="Wyślemy link do logowania. Bez hasła.">
+              <Input id="email" name="email" type="email" autoComplete="email" inputMode="email" required aria-describedby="email-hint" />
+            </Field>
+            <SubmitButton full pendingLabel="Wysyłam…">
+              Wyślij link
+            </SubmitButton>
+          </form>
         ) : null}
-        {demoModeEnabled() ? (
+
+        {demo ? (
           <>
             <Notice tone="warn" title="Wersja testowa">
               Wybierz konto testowe. Wszystkie zakłady, osoby i numery w tej wersji są fikcyjne.
@@ -68,12 +68,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
               ))}
             </ul>
           </>
-        ) : (
+        ) : null}
+
+        {!demo && !emailLogin ? (
           <div className="rounded-[14px] border border-line bg-card p-5">
-            <p className="font-semibold">Logowanie linkiem z e-maila będzie dostępne po wdrożeniu Supabase Auth.</p>
-            <p className="mt-1 text-muted">W razie pytań zadzwoń do opiekuna partnerów Ostoi.</p>
+            <p className="font-semibold">Logowanie jest chwilowo niedostępne.</p>
+            <p className="mt-1 text-muted">Zadzwoń do opiekuna partnerów Ostoi: {OPIEKUN_PHONE}.</p>
           </div>
-        )}
+        ) : null}
       </div>
     </main>
   );

@@ -20,6 +20,7 @@ import {
 } from "@/lib/labels";
 import { requireMember } from "@/lib/session";
 import { acceptOffer, declineOffer } from "../actions";
+import { PushToggle } from "../push-toggle";
 
 export const metadata: Metadata = { title: "Zapytania" };
 export const dynamic = "force-dynamic";
@@ -42,7 +43,10 @@ type InboxRow = {
 
 export default async function InboxPage({ searchParams }: { searchParams: SearchParams }) {
   const me = await requireMember();
-  const rows = await withUser(me.userId, (tx) => tx<InboxRow[]>`select * from get_inbox()`);
+  const { rows, devices } = await withUser(me.userId, async (tx) => ({
+    rows: await tx<InboxRow[]>`select * from get_inbox()`,
+    devices: (await tx<{ n: number }[]>`select count(*)::int as n from push_subscriptions where user_id = ${me.userId}`)[0].n,
+  }));
   const fresh = rows.filter((r) => r.status === "nowe");
   const history = rows.filter((r) => r.status !== "nowe");
 
@@ -124,6 +128,15 @@ export default async function InboxPage({ searchParams }: { searchParams: Search
             </Card>
           ))
         )}
+
+        {devices === 0 ? (
+          <Card aria-labelledby="powiadomienia">
+            <h2 id="powiadomienia" className="mb-2 text-[17px] font-semibold">
+              Powiadomienia na tym urządzeniu
+            </h2>
+            <PushToggle publicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} />
+          </Card>
+        ) : null}
 
         {history.length > 0 ? (
           <section aria-labelledby="historia">

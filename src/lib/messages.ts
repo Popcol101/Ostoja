@@ -14,6 +14,9 @@ export const MESSAGES = {
   "profil-zapisany": "Zapisano profil.",
   "cennik-zapisany": "Zapisano cennik.",
   "rodzina-zapisano": "Dziękujemy. Zakład widzi już te informacje.",
+  "link-wyslany": "Jeśli ten adres jest przypisany do zakładu, wysłaliśmy na niego link. Sprawdź skrzynkę – link działa godzinę.",
+  "sms-zlecony": "SMS z linkiem jest w drodze do rodziny.",
+  "powiadomienia-wlaczone": "Powiadomienia są włączone na tym urządzeniu.",
   // Błędy formularzy
   "sprawdz-dane": "Sprawdź wpisane dane.",
   "sprawdz-daty": "Sprawdź daty i długość pól.",
@@ -41,6 +44,11 @@ export const MESSAGES = {
   "aneks": "Po podpisaniu umowy zakres usług zmienia się aneksem",
   "link-wygasl": "Link wygasł lub jest nieprawidłowy",
   "zasob-odwolany": "Nie można zarezerwować zasobu dla odwołanego wydarzenia",
+  "link-logowania-wygasl": "Link wygasł albo został już użyty. Poproś o nowy.",
+  "limit-linkow": "Link można wysłać raz na minutę. Spróbuj za chwilę.",
+  "brak-zakladu": "To konto nie jest przypisane do żadnego zakładu. Zadzwoń do opiekuna partnerów Ostoi.",
+  "demo-wylaczone": "Logowanie kontami testowymi jest wyłączone.",
+  "brak-telefonu": "Brak numeru telefonu rodziny w zleceniu.",
   "blad-zapisu": "Nie udało się zapisać. Spróbuj ponownie albo zadzwoń do opiekuna Ostoi.",
 } as const;
 

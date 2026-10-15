@@ -4,10 +4,11 @@ import { SubmitButton } from "@/components/client";
 import { Flash, type SearchParams } from "@/components/flash";
 import { Card, CardTitle, Field, Input, PageTitle, Textarea } from "@/components/ui";
 import { withUser } from "@/lib/db";
-import { formatPln } from "@/lib/format";
+import { formatDate, formatPln } from "@/lib/format";
 import { FUNERAL_BENEFIT_PLN } from "@/lib/labels";
 import { requireMember } from "@/lib/session";
 import { updatePrices, updateProfile } from "../actions";
+import { PushToggle } from "../push-toggle";
 
 export const metadata: Metadata = { title: "Profil i cennik" };
 export const dynamic = "force-dynamic";
@@ -31,7 +32,7 @@ const FOR_LABEL: Record<string, string> = { wszystkie: "każdy pogrzeb", tradycy
 
 export default async function ProfilePage({ searchParams }: { searchParams: SearchParams }) {
   const me = await requireMember();
-  const { home, prices, quotes } = await withUser(me.userId, async (tx) => {
+  const { home, prices, quotes, devices } = await withUser(me.userId, async (tx) => {
     const [home] = await tx<Home[]>`select * from funeral_homes where id = ${me.homeId}`;
     const prices = await tx<PriceRow[]>`
       select c.item_key, c.label, c.for_burial, c.optional, p.price_pln
@@ -41,7 +42,9 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
       select 'Kremacja z ceremonią świecką' as label, quote_for(${me.homeId}, 'kremacja', 'swiecka') as quote
       union all select 'Pochówek tradycyjny z ceremonią religijną', quote_for(${me.homeId}, 'tradycyjny', 'religijna')
       union all select 'Kremacja bez ceremonii', quote_for(${me.homeId}, 'kremacja', 'bez')`;
-    return { home, prices, quotes };
+    const devices = await tx<{ device: string | null; created_at: Date; last_used_at: Date | null }[]>`
+      select device, created_at, last_used_at from push_subscriptions where user_id = ${me.userId} order by created_at`;
+    return { home, prices, quotes, devices };
   });
   const canEdit = me.role !== "ekipa";
 
@@ -56,6 +59,23 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
           Rozliczenia z Ostoją
         </Link>
       </p>
+
+      <Card className="mb-4">
+        <CardTitle aside={devices.length ? `${devices.length} ${devices.length === 1 ? "urządzenie" : "urządzenia"}` : undefined}>
+          Powiadomienia o nowych zapytaniach
+        </CardTitle>
+        <PushToggle publicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} />
+        {devices.length ? (
+          <ul className="mt-3 flex flex-col gap-1 border-t border-line-soft pt-3 text-[14px] text-muted">
+            {devices.map((d) => (
+              <li key={d.created_at.toISOString()}>
+                {d.device ?? "Urządzenie"} · włączone {formatDate(d.created_at)}
+                {d.last_used_at ? ` · ostatnie powiadomienie ${formatDate(d.last_used_at)}` : ""}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
