@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ground: #eef0ec;
+  --color-ground-family: #f3f4f1;
+  --color-card: #ffffff;
+  --color-line: #d9ddd6;
+  --color-line-soft: #e6e9e4;
+  --color-ink: #17211e;
+  --color-muted: #55615c;
+  --color-brand: #24453c;
+  --color-brand-dark: #16302a;
+  --color-brand-tint: #e3ece8;
+  --color-warn: #b9802a;
+  --color-warn-ink: #7a5214;
+  --color-warn-tint: #f6eddc;
+  --color-danger: #9b2c24;
+  --color-danger-tint: #f7e4e1;
+  --color-night: #17211e;
+  --color-night-line: #3a4a45;
+  --color-night-muted: #aebbb6;
+
+  --font-sans: "Figtree Variable", "Figtree", system-ui, sans-serif;
+  --font-serif: "Newsreader Variable", "Newsreader", Georgia, serif;
+
+  --radius-card: 14px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  line-height: 1.45;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  body {
+    background: #fff !important;
+  }
+}

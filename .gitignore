@@ -4,3 +4,7 @@ node_modules/
 .env*
 !.env.example
 *.log
+test-results/
+playwright-report/
+tsconfig.tsbuildinfo
+next-env.d.ts
