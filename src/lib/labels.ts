@@ -76,3 +76,13 @@ export const ROLE_LABEL: Record<string, string> = {
 export const FUNERAL_BENEFIT_PLN = 7000;
 /** Opłata Ostoi za zlecenie z podpisaną umową (netto). */
 export const OSTOJA_FEE_PLN = 250;
+
+/** Podstawy wstrzymania zakładu – odpowiadają punktom zasad dla partnerów (/regulamin-partnera#wstrzymanie). */
+export const SUSPENSION_GROUND_LABEL: Record<string, string> = {
+  dokumenty: "Brak aktualnych dokumentów lub ubezpieczenia (pkt 1)",
+  ceny: "Ceny lub kosztorysy niezgodne z cennikiem w Ostoi (pkt 2)",
+  skargi: "Powtarzające się, potwierdzone skargi rodzin (pkt 3)",
+  umowa: "Inne naruszenie umowy partnerskiej (pkt 4)",
+  na_wniosek: "Na prośbę zakładu (pkt 5)",
+  inne: "Wymóg prawa lub decyzja organu (pkt 6)",
+};

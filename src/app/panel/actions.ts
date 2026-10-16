@@ -311,3 +311,19 @@ export async function removePushSubscription(endpoint: string): Promise<{ ok: bo
   await withUser(me.userId, (tx) => tx`delete from push_subscriptions where endpoint = ${endpoint}`);
   return { ok: true };
 }
+
+const appealSchema = z.object({
+  body: z.string().trim().min(20, { message: "Opisz sprawę (co najmniej 20 znaków)" }).max(2000),
+});
+
+/** Odwołanie od wstrzymania zakładu (P2B art. 11). Uprawnienia (właściciel/biuro) sprawdza submit_appeal. */
+export async function submitAppeal(formData: FormData) {
+  const me = await requireMember();
+  const PATH = "/panel/status";
+  const parsed = appealSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) back(PATH, parsed.error.issues[0]?.message ?? "Sprawdź wpisane dane.");
+  const result = await attempt(() => withUser(me.userId, (tx) => tx`select submit_appeal(${me.homeId}, ${parsed.data!.body})`));
+  if (!result.ok) back(PATH, result.message);
+  revalidatePath("/panel", "layout");
+  back(PATH, "Odwołanie wysłane. Opiekun partnerów odpowie w ciągu 7 dni.", "ok");
+}

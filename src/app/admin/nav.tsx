@@ -1,15 +1,16 @@
 "use client";
-import { Building2, PhoneCall, Receipt } from "lucide-react";
+import { Building2, PhoneCall, Receipt, Scale } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const items = [
   { href: "/admin", label: "Zakłady", icon: Building2, match: (p: string) => p === "/admin" || p.startsWith("/admin/zaklady") },
   { href: "/admin/zapytania", label: "Do opiekuna", icon: PhoneCall, match: (p: string) => p.startsWith("/admin/zapytania") },
+  { href: "/admin/odwolania", label: "Odwołania", icon: Scale, match: (p: string) => p.startsWith("/admin/odwolania") },
   { href: "/admin/rozliczenia", label: "Rozliczenia", icon: Receipt, match: (p: string) => p.startsWith("/admin/rozliczenia") },
 ];
 
-export function AdminNav({ waiting }: { waiting: number }) {
+export function AdminNav({ waiting, appeals }: { waiting: number; appeals: number }) {
   const path = usePathname();
   return (
     <nav aria-label="Administracja" className="border-b border-line bg-card print:hidden">
@@ -27,9 +28,9 @@ export function AdminNav({ waiting }: { waiting: number }) {
               >
                 <Icon size={18} aria-hidden="true" />
                 {label}
-                {href === "/admin/zapytania" && waiting > 0 ? (
-                  <span className="rounded-full bg-warn px-2 text-[13px] text-white">
-                    {waiting}
+                {(href === "/admin/zapytania" ? waiting : href === "/admin/odwolania" ? appeals : 0) > 0 ? (
+                  <span className="rounded-full bg-warn-ink px-2 text-[13px] text-white">
+                    {href === "/admin/zapytania" ? waiting : appeals}
                     <span className="sr-only"> czeka</span>
                   </span>
                 ) : null}

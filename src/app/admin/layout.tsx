@@ -13,7 +13,9 @@ export const dynamic = "force-dynamic";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await requireAdmin();
   // Sama liczba, bez danych kontaktowych – dlatego nie trafia do dziennika jak pełna lista.
-  const [{ count }] = await withUser(admin.userId, (tx) => tx<{ count: number }[]>`select admin_waiting_count() as count`);
+  const [{ count, appeals }] = await withUser(admin.userId, (tx) =>
+    tx<{ count: number; appeals: number }[]>`select admin_waiting_count() as count, admin_appeals_waiting() as appeals`,
+  );
 
   return (
     <div className="min-h-dvh bg-ground">
@@ -36,7 +38,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </form>
         </div>
       </header>
-      <AdminNav waiting={count} />
+      <AdminNav waiting={count} appeals={appeals} />
       <main className="mx-auto max-w-6xl px-4 pb-16 pt-5 lg:px-6">{children}</main>
     </div>
   );

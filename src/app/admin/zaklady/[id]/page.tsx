@@ -4,13 +4,13 @@ import { notFound } from "next/navigation";
 import { SubmitButton } from "@/components/client";
 import { Flash, type SearchParams } from "@/components/flash";
 import { InviteLinkCard, parseInviteCookie } from "@/components/invite-link";
-import { Badge, Card, CardTitle, DefinitionList, Field, Input, Notice, PageTitle, Select } from "@/components/ui";
+import { Badge, Card, CardTitle, DefinitionList, Field, Input, Notice, PageTitle, Select, Textarea } from "@/components/ui";
 import { withUser } from "@/lib/db";
-import { formatDate } from "@/lib/format";
-import { ROLE_LABEL } from "@/lib/labels";
+import { formatDate, formatDateTime } from "@/lib/format";
+import { ROLE_LABEL, SUSPENSION_GROUND_LABEL } from "@/lib/labels";
 import { requireAdmin } from "@/lib/session";
 import { INVITE_COOKIE, inviteLink } from "@/lib/team";
-import { inviteToHome, setVerified } from "../../actions";
+import { inviteToHome, setVerified, suspendHome } from "../../actions";
 
 type Home = {
   id: string;
@@ -27,22 +27,25 @@ type Home = {
   orders_month: number;
   created_at: Date;
 };
+type StatusChange = { status: "zweryfikowany" | "wstrzymany"; ground: string | null; reason: string | null; admin_name: string; created_at: Date };
 type Person = { kind: "osoba" | "zaproszenie"; name: string; email: string; role: string; since: Date | null };
 
 export default async function AdminHome({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: SearchParams }) {
   const admin = await requireAdmin();
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const { home, people } = await withUser(admin.userId, async (tx) => {
+  const { home, people, history } = await withUser(admin.userId, async (tx) => {
     const [home] = await tx<Home[]>`select * from admin_homes() where id = ${id}`;
     const people = home ? await tx<Person[]>`select * from admin_home_people(${id})` : [];
-    return { home, people };
+    const history = home ? await tx<StatusChange[]>`select * from admin_home_history(${id})` : [];
+    return { home, people, history };
   });
   if (!home) notFound();
   const fresh = parseInviteCookie((await cookies()).get(INVITE_COOKIE)?.value);
   const members = people.filter((p) => p.kind === "osoba");
   const invites = people.filter((p) => p.kind === "zaproszenie");
   const ready = home.owners > 0 && home.price_complete;
+  const suspended = !home.verified_at && history[0]?.status === "wstrzymany";
 
   return (
     <>
@@ -51,7 +54,15 @@ export default async function AdminHome({ params, searchParams }: { params: Prom
       </Link>
       <PageTitle
         sub={`${home.city_name} · dodany ${formatDate(home.created_at)}`}
-        aside={home.verified_at ? <Badge tone="brand">Zweryfikowany {formatDate(home.verified_at)}</Badge> : <Badge tone="warn">Do weryfikacji</Badge>}
+        aside={
+          home.verified_at ? (
+            <Badge tone="brand">Zweryfikowany {formatDate(home.verified_at)}</Badge>
+          ) : suspended ? (
+            <Badge tone="warn">Wstrzymany</Badge>
+          ) : (
+            <Badge tone="warn">Do weryfikacji</Badge>
+          )
+        }
       >
         {home.name}
       </PageTitle>
@@ -110,14 +121,28 @@ export default async function AdminHome({ params, searchParams }: { params: Prom
           <Card>
             <CardTitle>Widoczność dla rodzin</CardTitle>
             {home.verified_at ? (
-              <form action={setVerified} className="flex flex-col gap-3">
+              <form action={suspendHome} className="flex flex-col gap-3">
                 <p className="text-[15px]">Zakład jest na liście ofert i dostaje zapytania.</p>
+                <p className="text-[14px] text-muted">
+                  Wstrzymanie: zakład znika z listy ofert i nie dostaje nowych zapytań, trwające zlecenia zostają. Właściciel zobaczy w panelu
+                  podstawę i opis i może się odwołać. Opisz fakty tak, żeby zakład mógł się do nich odnieść.
+                </p>
                 <input type="hidden" name="homeId" value={home.id} />
-                <input type="hidden" name="verified" value="nie" />
-                <label className="flex items-start gap-3 text-[15px]">
-                  <input type="checkbox" required className="mt-0.5 size-5 accent-brand" />
-                  Wstrzymuję zakład: znika z listy ofert i nie dostaje nowych zapytań. Trwające zlecenia zostają.
-                </label>
+                <Field id="ground" label="Podstawa z zasad dla partnerów">
+                  <Select id="ground" name="ground" required defaultValue="">
+                    <option value="" disabled>
+                      Wybierz podstawę
+                    </option>
+                    {Object.entries(SUSPENSION_GROUND_LABEL).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field id="reason" label="Uzasadnienie dla zakładu" hint="Konkretne fakty: co, kiedy, ile razy. Bez danych rodzin.">
+                  <Textarea id="reason" name="reason" required minLength={20} maxLength={1000} rows={4} aria-describedby="reason-hint" />
+                </Field>
                 <SubmitButton variant="danger" pendingLabel="Wstrzymuję…">
                   Wstrzymaj zakład
                 </SubmitButton>
@@ -130,8 +155,12 @@ export default async function AdminHome({ params, searchParams }: { params: Prom
                     {home.price_complete ? "" : "Cennik jest niepełny – bez niego zakład nie pojawi się na liście ofert."}
                   </Notice>
                 )}
+                {suspended ? (
+                  <p className="text-[15px]">
+                    Zakład jest wstrzymany. Przywróć go, gdy przyczyna ustała – odwołania zakładu rozpatrujesz w zakładce Odwołania.
+                  </p>
+                ) : null}
                 <input type="hidden" name="homeId" value={home.id} />
-                <input type="hidden" name="verified" value="tak" />
                 <label className="flex items-start gap-3 text-[15px]">
                   <input type="checkbox" required className="mt-0.5 size-5 accent-brand" />
                   Sprawdziłem dokumenty (CEIDG lub KRS) i umowę partnerską.
@@ -140,6 +169,26 @@ export default async function AdminHome({ params, searchParams }: { params: Prom
               </form>
             )}
           </Card>
+
+          {history.length ? (
+            <Card>
+              <CardTitle>Historia statusu</CardTitle>
+              <ol className="flex flex-col divide-y divide-line-soft">
+                {history.map((h) => (
+                  <li key={`${h.created_at.toISOString()}-${h.status}`} className="py-2.5 text-[15px]">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <Badge tone={h.status === "wstrzymany" ? "warn" : "brand"}>{h.status === "wstrzymany" ? "Wstrzymany" : "Zweryfikowany"}</Badge>
+                      <span className="text-muted">
+                        {formatDateTime(h.created_at)} · {h.admin_name}
+                      </span>
+                    </span>
+                    {h.ground ? <span className="mt-1 block font-semibold">{SUSPENSION_GROUND_LABEL[h.ground]}</span> : null}
+                    {h.reason ? <span className="mt-0.5 block">{h.reason}</span> : null}
+                  </li>
+                ))}
+              </ol>
+            </Card>
+          ) : null}
 
           <Card>
             <CardTitle>Zaproś do panelu</CardTitle>

@@ -1,3 +1,4 @@
+import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { MESSAGES, messageCode, messageText, withMessage } from "./messages";
 
@@ -25,5 +26,18 @@ describe("komunikaty po akcjach", () => {
   it("kody są unikalne i w ASCII", () => {
     for (const code of Object.keys(MESSAGES)) expect(code).toMatch(/^[a-z-]+$/);
     expect(new Set(Object.values(MESSAGES)).size).toBe(Object.keys(MESSAGES).length);
+  });
+
+  it("ma tekst dla każdego błędu, który baza pokazuje użytkownikowi (P0001, 42501)", () => {
+    const dir = "supabase/migrations";
+    const missing: string[] = [];
+    for (const file of readdirSync(dir).filter((f) => f.endsWith(".sql"))) {
+      const sql = readFileSync(`${dir}/${file}`, "utf8");
+      for (const m of sql.matchAll(/raise exception '((?:[^']|'')+)'\s+using errcode = '(?:P0001|42501)'/g)) {
+        const text = m[1].replaceAll("''", "'");
+        if (messageCode(text) === "blad-zapisu") missing.push(`${file}: ${text}`);
+      }
+    }
+    expect(missing).toEqual([]);
   });
 });

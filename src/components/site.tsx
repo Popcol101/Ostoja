@@ -74,6 +74,7 @@ export function SiteFooter() {
           <Link href="/#zasady" className="text-night-text">Zasady</Link>
           <Link href="/regulamin" className="text-night-text">Regulamin</Link>
           <Link href="/prywatnosc" className="text-night-text">Prywatność</Link>
+          <Link href="/regulamin-partnera" className="text-night-text">Dla zakładów</Link>
           <Link href="/logowanie" className="text-night-text">Panel zakładu</Link>
           <a href={`tel:${OPIEKUN_PHONE.replace(/\s/g, "")}`} className="text-night-text">Kontakt</a>
         </nav>

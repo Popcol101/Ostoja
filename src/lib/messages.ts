@@ -49,7 +49,8 @@ export const MESSAGES = {
   "limit-linkow": "Link można wysłać raz na minutę. Spróbuj za chwilę.",
   "brak-zakladu": "To konto nie jest przypisane do żadnego zakładu. Zadzwoń do opiekuna partnerów Ostoi.",
   "demo-wylaczone": "Logowanie kontami testowymi jest wyłączone.",
-  "brak-telefonu": "Brak numeru telefonu rodziny w zleceniu.",
+  "brak-telefonu": "Brak numeru telefonu rodziny w zleceniu",
+  "limit-sms": "Do rodziny poszły już 3 SMS-y w ciągu doby. Zadzwoń zamiast pisać.",
   // Zespół
   "zaproszenie-utworzone": "Zaproszenie gotowe. Wyślij link tej osobie – działa 7 dni.",
   "zaproszenie-odwolane": "Zaproszenie odwołane. Link przestał działać.",
@@ -84,6 +85,20 @@ export const MESSAGES = {
   "kody-limit": "Wysłaliśmy już kilka kodów na ten numer. Zadzwoń do opiekuna – pomożemy od razu.",
   "kod-za-wczesnie": "Nowy kod możesz wysłać po minucie od poprzedniego.",
   "formularz-wygasl": "Ten formularz wygasł. Wypełnij go jeszcze raz.",
+  // Status zakładu i odwołania (P2B)
+  "zaklad-wstrzymany-powod": "Zakład wstrzymany. Uzasadnienie widzi właściciel w panelu i może się odwołać.",
+  "odwolanie-wyslane": "Odwołanie wysłane. Opiekun partnerów odpowie w ciągu 7 dni.",
+  "odwolanie-rozpatrzone": "Odpowiedź zapisana. Zakład widzi ją w panelu.",
+  "brak-dostepu-zaklad": "Brak dostępu do zakładu",
+  "odwolanie-czeka": "Odwołanie czeka już na odpowiedź",
+  "odwolanie-juz-rozpatrzone": "Odwołanie jest już rozpatrzone",
+  "odwolanie-kto": "Odwołanie składa właściciel albo biuro zakładu",
+  "opisz-fakty": "Opisz konkretne fakty (co najmniej 20 znaków)",
+  "opisz-sprawe": "Opisz sprawę (co najmniej 20 znaków)",
+  "uzasadnij-odpowiedz": "Uzasadnij odpowiedź (co najmniej 20 znaków)",
+  "wstrzymanie-uzasadnienie": "Wstrzymanie zakładu wymaga uzasadnienia",
+  "zaklad-niewstrzymany": "Zakład nie jest wstrzymany",
+  "zaklad-niezweryfikowany": "Zakład nie jest zweryfikowany albo nie istnieje",
   "blad-zapisu": "Nie udało się zapisać. Spróbuj ponownie albo zadzwoń do opiekuna Ostoi.",
 } as const;
 

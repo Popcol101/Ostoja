@@ -62,12 +62,54 @@ export async function createHome(formData: FormData) {
 export async function setVerified(formData: FormData) {
   const admin = await requireAdmin();
   const home = z.guid().parse(formData.get("homeId"));
-  const verified = formData.get("verified") === "tak";
   const path = `/admin/zaklady/${home}`;
-  await attempt(path, () => withUser(admin.userId, (tx) => tx`select admin_set_verified(${home}, ${verified})`));
+  await attempt(path, () => withUser(admin.userId, (tx) => tx`select admin_set_verified(${home}, true)`));
   revalidatePath("/admin");
   revalidatePath(path);
-  back(path, "ok", verified ? "Zakład zweryfikowany. Rodziny widzą go na liście ofert." : "Zakład wstrzymany. Rodziny go nie widzą i nie dostaje zapytań.");
+  back(path, "ok", "Zakład zweryfikowany. Rodziny widzą go na liście ofert.");
+}
+
+const GROUNDS = ["dokumenty", "ceny", "skargi", "umowa", "na_wniosek", "inne"] as const;
+const suspendSchema = z.object({
+  homeId: z.guid(),
+  ground: z.enum(GROUNDS, { message: "Sprawdź wpisane dane." }),
+  reason: z.string().trim().min(20, { message: "Opisz konkretne fakty (co najmniej 20 znaków)" }).max(1000),
+});
+
+/** Wstrzymanie zakładu (P2B art. 4): podstawa z zasad dla partnerów i konkretne fakty, które zobaczy zakład. */
+export async function suspendHome(formData: FormData) {
+  const admin = await requireAdmin();
+  const raw = Object.fromEntries(formData);
+  const homeId = z.guid().parse(raw.homeId);
+  const path = `/admin/zaklady/${homeId}`;
+  const parsed = suspendSchema.safeParse(raw);
+  if (!parsed.success) back(path, "blad", parsed.error.issues[0]?.message ?? "Sprawdź wpisane dane.");
+  const d = parsed.data!;
+  await attempt(path, () =>
+    withUser(admin.userId, (tx) => tx`select admin_suspend_home(${homeId}, ${d.ground}::suspension_ground, ${d.reason})`),
+  );
+  revalidatePath("/admin");
+  revalidatePath(path);
+  back(path, "ok", "Zakład wstrzymany. Uzasadnienie widzi właściciel w panelu i może się odwołać.");
+}
+
+const answerSchema = z.object({
+  appealId: z.guid(),
+  decision: z.enum(["przywroc", "utrzymaj"], { message: "Sprawdź wpisane dane." }),
+  answer: z.string().trim().min(20, { message: "Uzasadnij odpowiedź (co najmniej 20 znaków)" }).max(2000),
+});
+
+export async function answerAppeal(formData: FormData) {
+  const admin = await requireAdmin();
+  const PATH = "/admin/odwolania";
+  const parsed = answerSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) back(PATH, "blad", parsed.error.issues[0]?.message ?? "Sprawdź wpisane dane.");
+  const d = parsed.data!;
+  await attempt(PATH, () =>
+    withUser(admin.userId, (tx) => tx`select admin_answer_appeal(${d.appealId}, ${d.decision === "przywroc"}, ${d.answer})`),
+  );
+  revalidatePath("/admin", "layout");
+  back(PATH, "ok", "Odpowiedź zapisana. Zakład widzi ją w panelu.");
 }
 
 const inviteSchema = z.object({

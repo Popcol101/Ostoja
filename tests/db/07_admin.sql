@@ -69,7 +69,7 @@ begin
 
   perform admin_set_verified(v_id, true);
   assert (select verified_at from admin_homes() where id = v_id) is not null, 'weryfikacja nie zadziałała';
-  perform admin_set_verified(v_id, false);
+  perform admin_suspend_home(v_id, 'dokumenty', 'Wygasło ubezpieczenie OC zakładu, brak nowej polisy.');
   assert (select verified_at from admin_homes() where id = v_id) is null, 'wstrzymanie nie zadziałało';
 
   assert (select count(*) from admin_escalations() where handled_at is null) = 1, 'brak zapytania do opiekuna';
