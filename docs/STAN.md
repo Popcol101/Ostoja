@@ -74,7 +74,7 @@ telefon 390 px i komputer 1280 px). Zrzuty: docs/zrzuty/.
 | E-maile logowania | docs/supabase-szablony-email.md | szablon Magic Link po polsku; potrzebny własny SMTP |
 | Komunikaty | src/lib/messages.ts + test | test pilnuje, że każdy błąd z bazy ma tekst dla użytkownika (znalazł 2 brakujące) |
 
-Testy: `npm test` (32), `npm run test:db` (12/12), `npm run e2e` (39/39 na 390 i 1280 px).
+Testy: `npm test` (32), `npm run test:db` (12/12), `npm run e2e` (34/34 na 390 i 1280 px).
 
 Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, panel /admin.
 
