@@ -72,9 +72,10 @@ telefon 390 px i komputer 1280 px). Zrzuty: docs/zrzuty/.
 | Wnioski RODO | migracja 20261016001100, /admin/rodo | wyszukanie po numerze, kopia danych JSON, usunięcie z zapytań; zlecenia – wskazanie zakładu |
 | Procedury | docs/prawne/ (rozdział 10) | naruszenia (72 h) i wnioski osób – do zatwierdzenia |
 | E-maile logowania | docs/supabase-szablony-email.md | szablon Magic Link po polsku; potrzebny własny SMTP |
+| Klepsydry | migracja 20261016001200, src/lib/obituary.ts (+ test), /panel/zlecenia/[id]/klepsydra, /klepsydra/[adres] | treść wg polskiego zwyczaju: religijna (krzyż, Ś.P., sakramenty, Msza Święta żałobna), świecka (bez symboli religijnych, opcjonalnie gałązka), bez ceremonii / w gronie najbliższych; odmiana zmarła/zmarł, kremacja (urna), dzień tygodnia; podgląd na żywo, druk A4 (1 strona, dopasowanie treści); publikacja za zgodą rodziny, adres z losową końcówką, 30 dni po pogrzebie znika; udostępnianie: Facebook, WhatsApp, SMS, e-mail, kopiowanie, systemowe „Udostępnij”; obraz podglądu linku 1200×630 |
 | Komunikaty | src/lib/messages.ts + test | test pilnuje, że każdy błąd z bazy ma tekst dla użytkownika (znalazł 2 brakujące) |
 
-Testy: `npm test` (32), `npm run test:db` (12/12), `npm run e2e` (34/34 na 390 i 1280 px).
+Testy: `npm test` (48), `npm run test:db` (13/13), `npm run e2e` (40/40 na 390 i 1280 px).
 
 Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, panel /admin.
 
@@ -89,7 +90,7 @@ Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, pan
 
 ## Następne kroki (w tej kolejności)
 1. Wersja testowa – stan:
-   - Supabase (projekt iarvcirfxjlyxpicnxyr, Frankfurt): migracje do 1100 wgrane konektorem, z wyjątkiem dwóch funkcji
+   - Supabase (projekt iarvcirfxjlyxpicnxyr, Frankfurt): migracje do 1200 (klepsydry) wgrane konektorem, z wyjątkiem dwóch funkcji
      z „delete” (purge_old_data w nowej wersji, admin_subject_erase) – **do uruchomienia przez właściciela:
      scripts/supabase/uzupelnienie-2026-10-16.sql w SQL Editor** (przenosi też pg_net do schematu extensions).
      Do tego czasu przycisk „Usuń dane z zapytań” w /admin/rodo zwraca błąd, a retencja nie czyści błędów aplikacji.
@@ -103,7 +104,8 @@ Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, pan
    - Do zrobienia przez właściciela (docs/supabase-szablony-email.md): wyłączyć rejestrację, Site URL i Redirect URLs,
      szablon Magic Link, **własny SMTP** (wbudowana poczta Supabase wysyła tylko do członków zespołu projektu).
 2. Przejść scenariusze z arkusza z 1–2 zakładami; uwagi do zakładki Spotkania, błędy do zakładki Błędy.
-   Nowe scenariusze do arkusza: wstrzymanie i odwołanie, wniosek RODO, podgląd błędów.
+   Nowe scenariusze do arkusza: wstrzymanie i odwołanie, wniosek RODO, podgląd błędów, klepsydra (edycja, druk, publikacja,
+   udostępnienie). Zapytać zakłady: czy dodać zdjęcie zmarłego na klepsydrze (wymaga przechowywania plików i zgody rodziny).
 3. Przegląd prawny: docs/prawne/Ostoja-RODO-i-bezpieczenstwo-szkic.docx (z rozdziałem 10), /prywatnosc, /regulamin,
    /regulamin-partnera (mediatorzy do wskazania); umowy DPA z dostawcami.
 4. Do dopracowania: e-mail do zakładu przy wstrzymaniu (trwały nośnik), alerty o nowych błędach, kopie zapasowe (Supabase Pro),
