@@ -1,6 +1,8 @@
 "use client";
+import { useReportError } from "@/components/client";
 
-export default function PanelError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function PanelError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useReportError(error);
   return (
     <div role="alert" className="rounded-[14px] border border-line bg-card px-5 py-8 text-center">
       <p className="text-[17px] font-semibold">Nie udało się wczytać tej strony.</p>

@@ -1,6 +1,8 @@
 "use client";
+import { useReportError } from "@/components/client";
 
-export default function RootError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function RootError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useReportError(error);
   const phone = process.env.NEXT_PUBLIC_OPIEKUN_PHONE ?? "+48 000 000 000";
   return (
     <main className="flex min-h-dvh items-center justify-center bg-ground-family px-4">

@@ -132,3 +132,19 @@ export function PrintButton({ label = "Drukuj lub zapisz jako PDF" }: { label?: 
     </button>
   );
 }
+
+/** Zgłasza błąd z granicy błędów do /api/bledy (bez danych osobowych – czyści je serwer). */
+export function useReportError(error: Error & { digest?: string }) {
+  useEffect(() => {
+    try {
+      void fetch("/api/bledy", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ path: window.location.pathname, message: `${error.name}: ${error.message}`.slice(0, 500), digest: error.digest }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch {
+      // brak sieci – trudno
+    }
+  }, [error]);
+}

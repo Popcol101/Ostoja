@@ -110,3 +110,17 @@ test("zakład nie wejdzie do administracji", async ({ page }) => {
   await expect(page).toHaveURL(/\/logowanie/);
   await expect(page.getByText("Ten panel jest tylko dla administratorów Ostoi.")).toBeVisible();
 });
+
+test("błąd z przeglądarki trafia do administracji bez danych osobowych", async ({ page, request }) => {
+  const res = await request.post("/api/bledy", {
+    data: { path: "/r/demo-rodzina-mazur-0000000000000000000000000000?x=1", message: "TypeError: nie zadzwoniono pod +48 600 100 200 (jan@example.com)" },
+  });
+  expect(res.status()).toBe(204);
+  await loginAs(page, /Ola Maj/);
+  await page.goto("/admin/bledy");
+  await expect(page.getByRole("heading", { name: "Błędy" })).toBeVisible();
+  const card = page.locator("li", { hasText: "/r/[token]" }).first();
+  await expect(card.getByText("TypeError: nie zadzwoniono pod [liczba] ([e-mail])")).toBeVisible();
+  await expect(page.getByText("600 100 200")).toHaveCount(0);
+  await expect(page.getByText("demo-rodzina-mazur")).toHaveCount(0);
+});

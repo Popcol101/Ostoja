@@ -1,5 +1,5 @@
 "use client";
-import { Building2, PhoneCall, Receipt, Scale } from "lucide-react";
+import { Bug, Building2, PhoneCall, Receipt, Scale } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -8,6 +8,7 @@ const items = [
   { href: "/admin/zapytania", label: "Do opiekuna", icon: PhoneCall, match: (p: string) => p.startsWith("/admin/zapytania") },
   { href: "/admin/odwolania", label: "Odwołania", icon: Scale, match: (p: string) => p.startsWith("/admin/odwolania") },
   { href: "/admin/rozliczenia", label: "Rozliczenia", icon: Receipt, match: (p: string) => p.startsWith("/admin/rozliczenia") },
+  { href: "/admin/bledy", label: "Błędy", icon: Bug, match: (p: string) => p.startsWith("/admin/bledy") },
 ];
 
 export function AdminNav({ waiting, appeals }: { waiting: number; appeals: number }) {
