@@ -13,6 +13,10 @@ const security = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Kroje do obrazu podglądu klepsydry (next/og czyta pliki z dysku – Vercel musi je dołączyć do funkcji).
+  outputFileTracingIncludes: {
+    "/klepsydra/[slug]/opengraph-image": ["./node_modules/@fontsource/newsreader/files/newsreader-latin*-{500,600}-*.woff"],
+  },
   async headers() {
     const headers = [
       { source: "/:path*", headers: security },

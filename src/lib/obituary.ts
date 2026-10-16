@@ -51,6 +51,9 @@ export type Obituary = {
   request: string | null;
   signature: string;
   footer: string;
+  /** „zmarła” / „zmarł” i data zgonu („14 października 2026 r.”) – do krótkich form (obraz podglądu linku). */
+  verb: string;
+  diedOn: string | null;
   /** Pierwsza uroczystość do krótkiego tekstu udostępnienia: np. „Msza Święta żałobna: sobota 17 października, godz. 11:00”. */
   firstEvent: string | null;
   missing: string[];
@@ -202,6 +205,8 @@ export function buildObituary(input: ObituaryInput): Obituary {
     request: clean(input.request),
     signature: clean(input.signature) ?? (religious ? "O czym zawiadamia pogrążona w smutku Rodzina" : "Pogrążona w smutku Rodzina"),
     footer: `${input.homeName}, tel. ${input.homePhone}`,
+    verb,
+    diedOn: input.diedAt ? longDate(input.diedAt) : null,
     firstEvent,
     missing,
   };
@@ -209,7 +214,7 @@ export function buildObituary(input: ObituaryInput): Obituary {
 
 /** Krótki tekst do SMS-a, WhatsAppa i e-maila – kto zmarł i kiedy uroczystość. Bez danych rodziny. */
 export function shareText(o: Obituary): string {
-  const verb = o.intro.includes("zmarła") ? "zmarła" : "zmarł";
+  const verb = o.verb;
   const who = [o.honorific, o.name].filter(Boolean).join(" ");
   return `Z żalem zawiadamiamy, że ${verb} ${who}.${o.firstEvent ? ` ${o.firstEvent}.` : ""}`;
 }

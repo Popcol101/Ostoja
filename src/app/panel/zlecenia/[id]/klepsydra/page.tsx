@@ -1,120 +1,112 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PrintButton } from "@/components/client";
-import type { SearchParams } from "@/components/flash";
-import { param } from "@/components/flash";
-import { withUser } from "@/lib/db";
-import { formatDate, formatTime, TZ } from "@/lib/format";
+import { PrintButton, SubmitButton } from "@/components/client";
+import { Flash, type SearchParams } from "@/components/flash";
+import { ShareButtons } from "@/components/share";
+import { Card, CardTitle, Notice } from "@/components/ui";
+import { buildObituary, shareText } from "@/lib/obituary";
+import { loadPanelObituary } from "@/lib/obituary-data";
 import { requireMember } from "@/lib/session";
+import { publishObituary } from "../../../actions";
+import { ObituaryEditor } from "./editor";
 
 export const metadata: Metadata = { title: "Klepsydra" };
 export const dynamic = "force-dynamic";
-
-type Data = {
-  first: string | null;
-  last: string | null;
-  born_on: string | null;
-  died_at: Date | null;
-  ceremony: "religijna" | "swiecka" | "bez";
-  home_name: string;
-  home_phone: string;
-  events: { title: string; starts_at: string; place: string | null; kind: string }[];
-};
-
-function ageAtDeath(born: string | null, died: Date | null): number | null {
-  if (!born || !died) return null;
-  const [y, m, d] = born.split("-").map(Number);
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" })
-    .format(died)
-    .split("-")
-    .map(Number);
-  let age = parts[0] - y;
-  if (parts[1] < m || (parts[1] === m && parts[2] < d)) age -= 1;
-  return age;
-}
 
 export default async function KlepsydraPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: SearchParams }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const me = await requireMember();
-  const [d] = await withUser(me.userId, (tx) => tx<Data[]>`
-    select o.deceased_first_name as first, o.deceased_last_name as last, o.born_on, o.died_at, o.ceremony,
-           h.name as home_name, h.phone as home_phone,
-           coalesce((select json_agg(json_build_object('title', e.title, 'starts_at', lower(e.during), 'place', e.place, 'kind', e.kind)
-                     order by lower(e.during))
-                     from events e where e.order_id = o.id and e.status <> 'odwolany' and e.kind in ('ceremonia', 'pochowek')), '[]') as events
-    from orders o join funeral_homes h on h.id = o.home_id where o.id = ${id}`);
-  if (!d) notFound();
-
-  const name = [d.first, d.last].filter(Boolean).join(" ");
-  const formParam = await param(searchParams, "forma");
-  const female = formParam ? formParam === "k" : (d.first ?? "").trim().toLowerCase().endsWith("a");
-  const age = ageAtDeath(d.born_on, d.died_at);
-  const religious = d.ceremony === "religijna";
-  const back = `/panel/zlecenia/${id}`;
+  const data = await loadPanelObituary(me.userId, id);
+  if (!data) notFound();
+  const canEdit = me.role !== "ekipa";
+  const h = await headers();
+  const origin = process.env.APP_URL ?? `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
+  const url = data.slug ? `${origin}/klepsydra/${data.slug}` : null;
+  const saved = buildObituary(data.input);
+  const { input } = data;
+  const base = {
+    ceremony: input.ceremony,
+    burial: input.burial,
+    firstName: input.firstName,
+    lastName: input.lastName,
+    bornOn: input.bornOn,
+    diedAt: input.diedAt,
+    events: input.events,
+    homeName: input.homeName,
+    homePhone: input.homePhone,
+  };
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="flex w-full max-w-[794px] flex-wrap items-center justify-between gap-2 print:hidden">
-        <Link href={back} className="text-sm font-semibold text-brand">
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
+        <Link href={`/panel/zlecenia/${id}`} className="inline-flex min-h-11 items-center text-sm font-semibold text-brand">
           ← Karta zlecenia
         </Link>
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="text-muted">Forma:</span>
-          <Link href={`?forma=k`} aria-current={female ? "true" : undefined} className={`rounded-full px-3 py-2 ${female ? "bg-brand text-white" : "bg-card text-brand"}`}>
-            zmarła
-          </Link>
-          <Link href={`?forma=m`} aria-current={!female ? "true" : undefined} className={`rounded-full px-3 py-2 ${!female ? "bg-brand text-white" : "bg-card text-brand"}`}>
-            zmarł
-          </Link>
-          <PrintButton />
-        </div>
+        <PrintButton label="Drukuj klepsydrę (A4)" />
+      </div>
+      <h1 className="font-serif text-[28px] leading-tight print:hidden">Klepsydra</h1>
+      <div className="print:hidden">
+        <Flash searchParams={searchParams} />
       </div>
 
-      {!name ? (
-        <p className="rounded-xl bg-warn-tint px-4 py-3 text-warn-ink print:hidden">
-          Uzupełnij imię i nazwisko zmarłego w karcie zlecenia – klepsydra je pobierze.
-        </p>
-      ) : null}
+      <ObituaryEditor
+        orderId={id}
+        base={{ ...base, diedAt: base.diedAt ? new Date(base.diedAt).toISOString() : null }}
+        initial={data.fields}
+        orderCeremony={data.orderCeremony}
+        canEdit={canEdit}
+      />
 
-      <article
-        aria-label="Podgląd klepsydry"
-        className="aspect-[210/297] w-full max-w-[794px] bg-white p-[6%] text-center text-black print:max-w-none print:p-[18mm]"
-      >
-        <div className="flex h-full flex-col items-center justify-center gap-[3%] border-[6px] border-black px-[8%] py-[6%]">
-          {religious ? (
-            <svg aria-hidden="true" viewBox="0 0 40 60" className="h-[8%]">
-              <path d="M17 0h6v16h17v6H23v38h-6V22H0v-6h17z" fill="#000" />
-            </svg>
-          ) : null}
-          <p className="font-serif text-[clamp(14px,2.4vw,20px)]">
-            Z głębokim żalem zawiadamiamy, że{" "}
-            {d.died_at ? `dnia ${formatDate(d.died_at, { year: "numeric" })}` : "[DATA ZGONU]"}{" "}
-            {female ? "zmarła" : "zmarł"}
-            {age !== null ? `, przeżywszy ${age} lat,` : ""}
-          </p>
-          {religious ? <p className="font-serif text-[clamp(14px,2.2vw,18px)]">Śp.</p> : null}
-          <h1 className="font-serif text-[clamp(28px,6vw,52px)] leading-tight">{name || "[IMIĘ I NAZWISKO]"}</h1>
-          <div className="font-serif text-[clamp(13px,2.2vw,18px)]">
-            {d.events.length ? (
-              d.events.map((e, i) => (
-                <p key={i}>
-                  {e.kind === "pochowek" ? "Pochówek" : religious ? "Uroczystości pogrzebowe" : "Ceremonia pożegnalna"} odbędzie się{" "}
-                  {formatDate(e.starts_at, { weekday: "long" })} o godz. {formatTime(e.starts_at)}
-                  {e.place ? `, ${e.place}` : ""}.
-                </p>
-              ))
-            ) : (
-              <p>Uroczystości pogrzebowe odbędą się [DATA, GODZINA, MIEJSCE].</p>
-            )}
+      <Card className="print:hidden">
+        <CardTitle>Klepsydra w internecie</CardTitle>
+        {data.published && data.visible && url ? (
+          <div className="flex flex-col gap-4">
+            <p className="text-[15px]">
+              Klepsydra jest pod adresem{" "}
+              <a href={url} className="break-all font-semibold text-brand" target="_blank" rel="noopener noreferrer">
+                {url}
+              </a>
+              . Rodzina widzi ten link także na swojej stronie. Zniknie z sieci 30 dni po pogrzebie.
+            </p>
+            <ShareButtons url={url} text={shareText(saved)} subject={`Klepsydra – ${saved.name}`} />
+            {canEdit ? (
+              <form action={publishObituary}>
+                <input type="hidden" name="orderId" value={id} />
+                <input type="hidden" name="publish" value="nie" />
+                <SubmitButton variant="secondary" pendingLabel="Wycofuję…">
+                  Wycofaj z sieci
+                </SubmitButton>
+              </form>
+            ) : null}
           </div>
-          <p className="font-serif text-[clamp(14px,2.4vw,20px)] italic">Pogrążona w smutku rodzina</p>
-          <p className="mt-auto text-[clamp(9px,1.4vw,11px)] text-[#444]">
-            {d.home_name}, tel. {d.home_phone}
+        ) : data.published && !data.visible ? (
+          <Notice>Minęło 30 dni od pogrzebu – klepsydra nie jest już widoczna w sieci.</Notice>
+        ) : canEdit && !data.saved ? (
+          <p className="text-[15px]">
+            Po zapisaniu treści klepsydrę można opublikować pod własnym adresem i wysłać SMS-em, e-mailem, przez WhatsApp albo udostępnić na
+            Facebooku.
           </p>
-        </div>
-      </article>
+        ) : canEdit ? (
+          <form action={publishObituary} className="flex flex-col gap-3">
+            <p className="text-[15px]">
+              Opublikowana klepsydra ma własny adres do wysłania SMS-em, e-mailem, przez WhatsApp albo do udostępnienia na Facebooku. Nie
+              pokazujemy w niej danych rodziny.
+            </p>
+            <input type="hidden" name="orderId" value={id} />
+            <input type="hidden" name="publish" value="tak" />
+            <label className="flex min-h-11 items-start gap-3 text-[15px]">
+              <input type="checkbox" name="consent" value="tak" required className="mt-0.5 size-5 accent-brand" />
+              Rodzina zgodziła się na publikację klepsydry w internecie.
+            </label>
+            <SubmitButton pendingLabel="Publikuję…">Opublikuj klepsydrę</SubmitButton>
+          </form>
+        ) : (
+          <p className="text-[15px] text-muted">Klepsydrę publikuje właściciel albo biuro.</p>
+        )}
+      </Card>
     </div>
   );
 }

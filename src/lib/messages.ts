@@ -101,6 +101,17 @@ export const MESSAGES = {
   "zaklad-niezweryfikowany": "Zakład nie jest zweryfikowany albo nie istnieje",
   // Wnioski RODO
   "podaj-pelny-numer": "Podaj pełny numer telefonu (9 cyfr)",
+  // Klepsydra
+  "klepsydra-zapisana": "Zapisano klepsydrę.",
+  "klepsydra-opublikowana": "Klepsydra jest w sieci. Udostępnij link rodzinie i znajomym.",
+  "klepsydra-wycofana": "Klepsydra wycofana z sieci.",
+  "klepsydra-ekipa": "Klepsydrę zmienia właściciel albo biuro.",
+  "klepsydra-dlugosc": "Sprawdź długość pól klepsydry.",
+  "klepsydra-publikuje": "Klepsydrę publikuje właściciel albo biuro zakładu",
+  "klepsydra-zapisz": "Najpierw zapisz klepsydrę",
+  "klepsydra-zgoda": "Potwierdź, że rodzina zgodziła się na publikację klepsydry",
+  "klepsydra-dane": "Uzupełnij imię, nazwisko i datę zgonu przed publikacją",
+  "klepsydra-adres": "Nie udało się przygotować adresu klepsydry",
   "blad-zapisu": "Nie udało się zapisać. Spróbuj ponownie albo zadzwoń do opiekuna Ostoi.",
 } as const;
 

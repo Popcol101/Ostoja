@@ -327,3 +327,81 @@ export async function submitAppeal(formData: FormData) {
   revalidatePath("/panel", "layout");
   back(PATH, "Odwołanie wysłane. Opiekun partnerów odpowie w ciągu 7 dni.", "ok");
 }
+
+const optText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max, { message: "Sprawdź długość pól klepsydry." })
+    .transform((v) => (v.length ? v : null));
+
+const obituarySchema = z.object({
+  gender: z.enum(["k", "m"]),
+  style: z.enum(["zlecenie", "religijna", "swiecka", "bez"]).transform((v) => (v === "zlecenie" ? null : v)),
+  maiden_name: optText(80),
+  description: optText(200),
+  sacraments: z.literal("tak").optional(),
+  symbol: z.enum(["krzyz", "galazka", "brak"]).optional(),
+  private_funeral: z.literal("tak").optional(),
+  ceremony_place: optText(160),
+  cemetery_place: optText(160),
+  rosary: optText(300),
+  request: optText(300),
+  signature: optText(200),
+});
+
+/** Zapis pól klepsydry. Treść składa generator (src/lib/obituary.ts); terminy idą z kalendarza zlecenia. */
+export async function saveObituary(formData: FormData) {
+  const me = await requireMember();
+  const orderId = uuid.parse(formData.get("orderId"));
+  const PATH = `/panel/zlecenia/${orderId}/klepsydra`;
+  if (me.role === "ekipa") back(PATH, "Klepsydrę zmienia właściciel albo biuro.");
+  const raw = Object.fromEntries(formData);
+  const parsed = obituarySchema.safeParse({
+    ...raw,
+    maiden_name: raw.maiden_name ?? "",
+    description: raw.description ?? "",
+    ceremony_place: raw.ceremony_place ?? "",
+    cemetery_place: raw.cemetery_place ?? "",
+    rosary: raw.rosary ?? "",
+    request: raw.request ?? "",
+    signature: raw.signature ?? "",
+  });
+  if (!parsed.success) back(PATH, parsed.error.issues[0]?.message ?? "Sprawdź wpisane dane.");
+  const d = parsed.data!;
+  const result = await attempt(() =>
+    withUser(me.userId, (tx) => tx`
+      insert into obituaries (order_id, home_id, gender, style, maiden_name, description, sacraments, symbol, private_funeral,
+                              ceremony_place, cemetery_place, rosary, request, signature)
+      values (${orderId}, ${me.homeId}, ${d.gender}, ${d.style}, ${d.maiden_name}, ${d.description}, ${d.sacraments === "tak"},
+              ${d.symbol ?? null}, ${d.private_funeral === "tak"}, ${d.ceremony_place}, ${d.cemetery_place}, ${d.rosary},
+              ${d.request}, ${d.signature})
+      on conflict (order_id) do update set
+        gender = excluded.gender, style = excluded.style, maiden_name = excluded.maiden_name, description = excluded.description,
+        sacraments = excluded.sacraments, symbol = excluded.symbol, private_funeral = excluded.private_funeral,
+        ceremony_place = excluded.ceremony_place, cemetery_place = excluded.cemetery_place, rosary = excluded.rosary,
+        request = excluded.request, signature = excluded.signature`),
+  );
+  if (!result.ok) back(PATH, result.message);
+  revalidatePath(PATH);
+  back(PATH, "Zapisano klepsydrę.", "ok");
+}
+
+export async function publishObituary(formData: FormData) {
+  const me = await requireMember();
+  const orderId = uuid.parse(formData.get("orderId"));
+  const PATH = `/panel/zlecenia/${orderId}/klepsydra`;
+  const publish = formData.get("publish") === "tak";
+  const consent = formData.get("consent") === "tak";
+  const result = await attempt(() =>
+    withUser(me.userId, async (tx) => {
+      const [o] = await tx<{ first: string | null; last: string | null }[]>`
+        select deceased_first_name as first, deceased_last_name as last from orders where id = ${orderId}`;
+      const base = slugify(`${o?.first ?? ""} ${o?.last ?? ""}`) || "klepsydra";
+      await tx`select publish_obituary(${orderId}, ${publish}, ${consent}, ${base})`;
+    }),
+  );
+  if (!result.ok) back(PATH, result.message);
+  revalidatePath(PATH);
+  back(PATH, publish ? "Klepsydra jest w sieci. Udostępnij link rodzinie i znajomym." : "Klepsydra wycofana z sieci.", "ok");
+}

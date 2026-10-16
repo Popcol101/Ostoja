@@ -80,7 +80,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       ) : null}
       <div className="mx-auto flex max-w-6xl gap-6 lg:px-6">
         <PanelNav variant="side" newCount={count} />
-        <main id="tresc" className="min-w-0 flex-1 px-4 pb-28 pt-5 lg:px-0 lg:pb-12">
+        <main id="tresc" className="min-w-0 flex-1 px-4 pb-28 pt-5 lg:px-0 lg:pb-12 print:p-0">
           {children}
         </main>
       </div>

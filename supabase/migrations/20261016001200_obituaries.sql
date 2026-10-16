@@ -8,6 +8,8 @@ create table public.obituaries (
   order_id          uuid primary key references public.orders (id) on delete cascade,
   home_id           uuid not null references public.funeral_homes (id) on delete cascade,
   gender            text not null check (gender in ('k', 'm')),
+  -- Rodzaj klepsydry; puste = jak ceremonia w zleceniu.
+  style             text check (style in ('religijna', 'swiecka', 'bez')),
   maiden_name       text check (length(maiden_name) <= 80),
   description       text check (length(description) <= 200),
   sacraments        boolean not null default false,
@@ -124,7 +126,7 @@ $$;
 create or replace function public.public_obituary(p_slug text) returns jsonb
 language sql stable security definer set search_path = public as $$
   select jsonb_build_object(
-    'ceremony', o.ceremony, 'burial', o.burial, 'gender', b.gender,
+    'ceremony', coalesce(b.style, o.ceremony::text), 'burial', o.burial, 'gender', b.gender,
     'first_name', o.deceased_first_name, 'last_name', o.deceased_last_name, 'maiden_name', b.maiden_name,
     'age', case when o.born_on is not null and o.died_at is not null
                 then extract(year from age((o.died_at at time zone 'Europe/Warsaw')::date, o.born_on))::int end,

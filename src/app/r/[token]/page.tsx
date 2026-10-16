@@ -1,11 +1,15 @@
 import { CalendarDays, Lock, Phone } from "lucide-react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { SubmitButton } from "@/components/client";
+import { ShareButtons } from "@/components/share";
 import { Flash, type SearchParams } from "@/components/flash";
 import { OPIEKUN_PHONE, SiteFooter, SiteHeader } from "@/components/site";
 import { Badge, Card, CardTitle, EmptyState, Field, Input, LinkButton, cx } from "@/components/ui";
 import { familyUpdate } from "@/app/rodzina-actions";
 import { asAnon } from "@/lib/db";
+import { buildObituary, shareText } from "@/lib/obituary";
+import { loadPublicObituary } from "@/lib/obituary-data";
 import { formatBankAccount, formatDateTime, formatPln } from "@/lib/format";
 import { BURIAL_LABEL, CEREMONY_LABEL, EVENT_STATUS_LABEL, FUNERAL_BENEFIT_PLN, STAGE_LABEL, STAGES, type Burial, type Ceremony, type EventStatus, type OrderStage } from "@/lib/labels";
 
@@ -31,6 +35,7 @@ type FamilyOrder = {
   contract_signed: boolean;
   price_list: { item_key: string; label: string; price_pln: number; optional: boolean }[];
   events: { kind: string; title: string; status: EventStatus; starts_at: string; place: string | null }[];
+  obituary_slug: string | null;
 };
 
 function warsawParts(iso: string | null): { date: string; time: string } {
@@ -58,6 +63,10 @@ export default async function FamilyOrderPage({ params, searchParams }: { params
       })
     : null;
   const tel = OPIEKUN_PHONE.replace(/\s/g, "");
+  const obituary = order?.obituary_slug ? await loadPublicObituary(order.obituary_slug) : null;
+  const obituaryText = obituary ? shareText(buildObituary(obituary.input)) : "";
+  const h = await headers();
+  const origin = process.env.APP_URL ?? `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`;
 
   if (!order) {
     return (
@@ -146,6 +155,23 @@ export default async function FamilyOrderPage({ params, searchParams }: { params
               </ul>
             )}
           </Card>
+
+          {obituary && order.obituary_slug ? (
+            <Card>
+              <CardTitle>Klepsydra</CardTitle>
+              <p className="mb-3 text-[15px]">
+                Zakład opublikował klepsydrę. Możesz wysłać ją bliskim – link nie zawiera Twoich danych.
+              </p>
+              <LinkButton href={`/klepsydra/${order.obituary_slug}`} variant="secondary" className="mb-3 w-full">
+                Zobacz klepsydrę
+              </LinkButton>
+              <ShareButtons
+                url={`${origin}/klepsydra/${order.obituary_slug}`}
+                text={obituaryText}
+                subject={`Klepsydra – ${[order.deceased_first_name, order.deceased_last_name].filter(Boolean).join(" ")}`}
+              />
+            </Card>
+          ) : null}
 
           <Card>
             <CardTitle>Koszt</CardTitle>
