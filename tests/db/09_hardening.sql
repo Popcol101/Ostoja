@@ -20,7 +20,7 @@ begin
   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and p.prosecdef and has_function_privilege('anon', p.oid, 'execute')
     and p.proname not in ('search_homes', 'home_price_list', 'family_get_order', 'family_update_order',
-                          'public_memorial', 'invitation_preview');
+                          'public_memorial', 'invitation_preview', 'public_obituary');
   assert extra is null, 'anon ma dostęp do: ' || coalesce(extra, '');
 end $$;
 
