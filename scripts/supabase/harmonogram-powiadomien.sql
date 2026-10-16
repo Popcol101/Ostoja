@@ -4,7 +4,7 @@
 -- Sekret trafia do Vault, nie do treści zadania.
 
 create extension if not exists pg_cron;
-create extension if not exists pg_net;
+create extension if not exists pg_net schema extensions;
 
 select vault.create_secret('SEKRET', 'ostoja_cron_secret');
 

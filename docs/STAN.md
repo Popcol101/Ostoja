@@ -1,4 +1,4 @@
-# Stan prac – Ostoja (15 października 2026, koniec dnia)
+# Stan prac – Ostoja (16 października 2026)
 
 ## Zrobione
 
@@ -62,6 +62,20 @@ Testy: `npm test` (27 testów Vitest), `npm run test:db` (9/9), `npm run e2e` (2
 umowa → klepsydra, link rodziny, strona pamięci, logowanie linkiem, powiadomienia, zespół, administracja, strony prawne;
 telefon 390 px i komputer 1280 px). Zrzuty: docs/zrzuty/.
 
+**16 października:**
+
+| Obszar | Pliki | Stan |
+| --- | --- | --- |
+| Wstrzymanie zakładu (P2B) | migracja 20261016000900, /admin/zaklady/[id], /admin/odwolania, /panel/status, /regulamin-partnera | podstawa + opis faktów, baner i uzasadnienie w panelu (z wydrukiem), odwołanie (właściciel/biuro), odpowiedź z uzasadnieniem, historia statusu |
+| Monitoring błędów | migracja 20261016001000, src/instrumentation.ts, /api/bledy, /admin/bledy | błędy serwera i przeglądarki bez danych osobowych, grupowane, 30 dni |
+| CSP z nonce | src/middleware.ts, src/app/layout.tsx | skrypty tylko z nonce ('strict-dynamic'); wszystkie strony renderowane dynamicznie |
+| Wnioski RODO | migracja 20261016001100, /admin/rodo | wyszukanie po numerze, kopia danych JSON, usunięcie z zapytań; zlecenia – wskazanie zakładu |
+| Procedury | docs/prawne/ (rozdział 10) | naruszenia (72 h) i wnioski osób – do zatwierdzenia |
+| E-maile logowania | docs/supabase-szablony-email.md | szablon Magic Link po polsku; potrzebny własny SMTP |
+| Komunikaty | src/lib/messages.ts + test | test pilnuje, że każdy błąd z bazy ma tekst dla użytkownika (znalazł 2 brakujące) |
+
+Testy: `npm test` (32), `npm run test:db` (12/12), `npm run e2e` (39/39 na 390 i 1280 px).
+
 Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, panel /admin.
 
 ### Decyzje i znane ograniczenia
@@ -75,19 +89,24 @@ Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, pan
 
 ## Następne kroki (w tej kolejności)
 1. Wersja testowa – stan:
-   - Supabase (projekt iarvcirfxjlyxpicnxyr, Frankfurt): wszystkie migracje do 800 i dane testowe wgrane (6 zakładów).
-     Doradca bezpieczeństwa: zostały tylko uwagi zamierzone (funkcje strony dla rodzin dla anon, funkcje panelu dla
-     authenticated – każda sprawdza auth.uid()) i „RLS bez polityk” dla tabel dostępnych wyłącznie przez funkcje.
-   - Vercel: projekt „ostoja” (zespół ostoja, region fra1), połączony z GitHubem, wdraża się po każdym pushu na main.
-     Adres: https://ostoja-cyan.vercel.app (ostoja.vercel.app było zajęte). Wszystkie zmienne ustawione,
-     DATABASE_URL (Session pooler, rola postgres) i SUPABASE_SERVICE_ROLE_KEY jako Sensitive.
-     Sprawdzone 15.10: logowanie demo, panel zakładu, odczyt z bazy.
+   - Supabase (projekt iarvcirfxjlyxpicnxyr, Frankfurt): migracje do 1100 wgrane konektorem, z wyjątkiem dwóch funkcji
+     z „delete” (purge_old_data w nowej wersji, admin_subject_erase) – **do uruchomienia przez właściciela:
+     scripts/supabase/uzupelnienie-2026-10-16.sql w SQL Editor** (przenosi też pg_net do schematu extensions).
+     Do tego czasu przycisk „Usuń dane z zapytań” w /admin/rodo zwraca błąd, a retencja nie czyści błędów aplikacji.
+     Konektor Supabase anuluje migracje z instrukcją delete/drop – takie zmiany zawsze przez SQL Editor.
+   - Doradca bezpieczeństwa: uwagi zamierzone (funkcje rodzin dla anon, funkcje panelu/administracji dla authenticated –
+     każda sprawdza auth.uid() lub assert_platform_admin) i „RLS bez polityk” dla tabel dostępnych tylko przez funkcje.
+   - Vercel: projekt „ostoja” (zespół ostoja, fra1), połączony z GitHubem, wdraża się po każdym pushu na main.
+     Adres: https://ostoja-cyan.vercel.app. Zmienne ustawione; DATABASE_URL i SUPABASE_SERVICE_ROLE_KEY jako Sensitive.
    - Harmonogram w Supabase (pg_cron + pg_net, sekret w Vault): ostoja-expire-offers, ostoja-powiadomienia (co minutę),
      ostoja-retencja (codziennie 3:15 UTC).
-   - Do zrobienia przez właściciela: Supabase → Authentication → wyłączyć rejestrację (Allow new users to sign up),
-     Site URL i Redirect URLs = https://ostoja-cyan.vercel.app; szablon e-maila Magic Link po polsku.
+   - Do zrobienia przez właściciela (docs/supabase-szablony-email.md): wyłączyć rejestrację, Site URL i Redirect URLs,
+     szablon Magic Link, **własny SMTP** (wbudowana poczta Supabase wysyła tylko do członków zespołu projektu).
 2. Przejść scenariusze z arkusza z 1–2 zakładami; uwagi do zakładki Spotkania, błędy do zakładki Błędy.
-3. Przegląd prawny: docs/prawne/Ostoja-RODO-i-bezpieczenstwo-szkic.docx, /prywatnosc, /regulamin; umowy DPA z dostawcami.
-4. Do dopracowania: uzasadnienie przy wstrzymaniu zakładu (P2B), procedura naruszeń i realizacji praw osób,
-   monitoring błędów bez danych osobowych, pełna CSP dla skryptów.
-5. Produkcja: DEMO_MODE=false, ALLOW_INDEXING=true, SMSAPI_TEST=false, plany Supabase Pro i Vercel Pro.
+   Nowe scenariusze do arkusza: wstrzymanie i odwołanie, wniosek RODO, podgląd błędów.
+3. Przegląd prawny: docs/prawne/Ostoja-RODO-i-bezpieczenstwo-szkic.docx (z rozdziałem 10), /prywatnosc, /regulamin,
+   /regulamin-partnera (mediatorzy do wskazania); umowy DPA z dostawcami.
+4. Do dopracowania: e-mail do zakładu przy wstrzymaniu (trwały nośnik), alerty o nowych błędach, kopie zapasowe (Supabase Pro),
+   test penetracyjny przed produkcją.
+5. Produkcja: DEMO_MODE=false, ALLOW_INDEXING=true, SMSAPI_TEST=false, plany Supabase Pro i Vercel Pro (Hobby nie pozwala
+   na użytek komercyjny).
