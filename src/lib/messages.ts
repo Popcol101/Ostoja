@@ -99,6 +99,8 @@ export const MESSAGES = {
   "wstrzymanie-uzasadnienie": "Wstrzymanie zakładu wymaga uzasadnienia",
   "zaklad-niewstrzymany": "Zakład nie jest wstrzymany",
   "zaklad-niezweryfikowany": "Zakład nie jest zweryfikowany albo nie istnieje",
+  // Wnioski RODO
+  "podaj-pelny-numer": "Podaj pełny numer telefonu (9 cyfr)",
   "blad-zapisu": "Nie udało się zapisać. Spróbuj ponownie albo zadzwoń do opiekuna Ostoi.",
 } as const;
 

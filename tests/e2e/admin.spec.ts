@@ -124,3 +124,26 @@ test("błąd z przeglądarki trafia do administracji bez danych osobowych", asyn
   await expect(page.getByText("600 100 200")).toHaveCount(0);
   await expect(page.getByText("demo-rodzina-mazur")).toHaveCount(0);
 });
+
+test("wniosek RODO: wyszukanie po numerze, kopia danych i usunięcie z zapytań", async ({ page }) => {
+  const phone = test.info().project.name === "telefon" ? "+48 500 100 203" : "500-100-204";
+  const name = test.info().project.name === "telefon" ? "Tomasz Lis" : "Agata Mazur";
+  await loginAs(page, /Ola Maj/);
+  await page.goto("/admin/rodo");
+  await page.getByLabel("Numer telefonu osoby składającej wniosek").fill(phone);
+  await page.getByRole("button", { name: "Szukaj danych" }).click();
+  await expect(page.getByText(name, { exact: false })).toBeVisible();
+  await expect(page.locator("li", { hasText: "Dom Pogrzebowy Cisza" }).last()).toBeVisible(); // zlecenie u zakładu
+  expect(page.url()).not.toMatch(/500/);
+
+  await page.getByRole("button", { name: "Przygotuj kopię danych (art. 15)" }).click();
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: /Pobierz kopię danych/ }).click()]);
+  const json = JSON.parse(await (await download.createReadStream()).toArray().then((c) => Buffer.concat(c).toString("utf8")));
+  expect(json.zapytania[0].imie_i_nazwisko).toBe(name);
+  await shot(page, "31-admin-rodo");
+
+  await page.getByLabel(/Potwierdzam tożsamość osoby/).check();
+  await page.getByRole("button", { name: "Usuń dane z zapytań" }).click();
+  await expect(page.getByText("Usunięto imię i numer z 1 zapytania", { exact: false })).toBeVisible();
+  await expect(page.getByText("Brak zapytań i szkiców z tym numerem.")).toBeVisible();
+});
