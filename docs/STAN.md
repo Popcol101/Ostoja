@@ -111,6 +111,10 @@ Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, pan
      Kolejność: „Authenticate this email domain” w Brevo → nadawca logowanie@ostoja.org → klucz SMTP → SMTP w Supabase
      (smtp-relay.brevo.com:587) → Site URL https://ostoja.org, Redirect URLs https://ostoja.org/** i https://ostoja-cyan.vercel.app/**.
      W Brevo wyłączyć śledzenie kliknięć w e-mailach transakcyjnych (link logowania nie powinien przechodzić przez przekierowanie).
+   - 17.10.2026: SMTP Brevo i ustawienia Auth zrobione przez właściciela. Test na produkcji przeszedł: zaproszenie
+     (Dom Pogrzebowy Cisza, rola biuro) → konto przez Admin API → e-mail „Link do panelu Ostoi” w Gmailu w Odebranych,
+     SPF/DKIM/DMARC = pass → logowanie do panelu. Do poprawy: Brevo nadal dokleja piksel otwarć i przekierowanie kliknięć
+     (sendibt2.com) – wyłączyć śledzenie w Brevo.
 2. Przejść scenariusze z arkusza z 1–2 zakładami; uwagi do zakładki Spotkania, błędy do zakładki Błędy.
    Nowe scenariusze do arkusza: wstrzymanie i odwołanie, wniosek RODO, podgląd błędów, klepsydra (edycja, druk, publikacja,
    udostępnienie). Zapytać zakłady: czy dodać zdjęcie zmarłego na klepsydrze (wymaga przechowywania plików i zgody rodziny).
