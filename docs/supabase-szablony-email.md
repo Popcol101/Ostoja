@@ -10,8 +10,8 @@ Konta zakładów zakłada opiekun albo właściciel zaproszeniem, więc rejestra
 | --- | --- |
 | Sign In / Providers → Email → Allow new users to sign up | **wyłączone** |
 | Sign In / Providers → Email → Confirm email | włączone (domyślnie) |
-| URL Configuration → Site URL | `https://ostoja-cyan.vercel.app` (później domena produkcyjna) |
-| URL Configuration → Redirect URLs | `https://ostoja-cyan.vercel.app/**` |
+| URL Configuration → Site URL | `https://ostoja.org` |
+| URL Configuration → Redirect URLs | `https://ostoja.org/**`, `https://ostoja-cyan.vercel.app/**` |
 | Emails → SMTP Settings | własny serwer SMTP – patrz punkt 3 |
 
 ## 2. Szablon „Magic Link” (Authentication → Emails → Magic Link)
@@ -34,15 +34,16 @@ Konta zakładów zakłada opiekun albo właściciel zaproszeniem, więc rejestra
         Zaloguj się do panelu
       </a>
     </p>
-    <p style="margin:0 0 8px;font-size:14px;line-height:1.5;color:#5C6461">
-      Jeśli to nie Ty prosiłeś o link, zignoruj tę wiadomość – bez kliknięcia nikt się nie zaloguje.
-    </p>
     <p style="margin:0;font-size:14px;line-height:1.5;color:#5C6461">
-      Pytania: opiekun partnerów Ostoi, [telefon – DO UZUPEŁNIENIA].
+      Jeśli to nie Ty prosiłeś o link, zignoruj tę wiadomość – bez kliknięcia nikt się nie zaloguje.
     </p>
   </div>
 </div>
 ```
+
+Szablon można zmienić dopiero po zapisaniu własnego SMTP (od 3.06.2026 nowe projekty Free z wbudowaną pocztą Supabase
+mają szablony zablokowane). Na telefonie treść edytuje się w zakładce „Source”, nie „Preview”. Telefon opiekuna dopiszemy,
+gdy będzie znany.
 
 Link prowadzi do strony `/logowanie/potwierdz`, która loguje dopiero po kliknięciu przycisku. Dzięki temu skanery
 poczty (otwierające linki automatycznie) nie zużyją jednorazowego linku.
