@@ -98,11 +98,19 @@ Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, pan
    - Doradca bezpieczeństwa: uwagi zamierzone (funkcje rodzin dla anon, funkcje panelu/administracji dla authenticated –
      każda sprawdza auth.uid() lub assert_platform_admin) i „RLS bez polityk” dla tabel dostępnych tylko przez funkcje.
    - Vercel: projekt „ostoja” (zespół ostoja, fra1), połączony z GitHubem, wdraża się po każdym pushu na main.
-     Adres: https://ostoja-cyan.vercel.app. Zmienne ustawione; DATABASE_URL i SUPABASE_SERVICE_ROLE_KEY jako Sensitive.
+     Adres: https://ostoja.org (www przekierowuje na adres główny; https://ostoja-cyan.vercel.app nadal działa).
+     APP_URL i VAPID_SUBJECT = https://ostoja.org. Zmienne ustawione; DATABASE_URL i SUPABASE_SERVICE_ROLE_KEY jako Sensitive.
+   - Domena ostoja.org: rejestr i DNS w Cloudflare (Cloudflare Registrar nie pozwala zmienić serwerów nazw), rekordy wpisuje
+     właściciel, wszystkie bez proxy: A @ 76.76.21.21, CNAME www cname.vercel-dns.com, Brevo (brevo-code, DKIM brevo1/brevo2,
+     DMARC p=none z raportami do Brevo, CNAME r i img). Wszystkie sprawdzone 17.10.2026. Poradnik: dokument
+     „Ostoja – serwer pocztowy dla logowania”.
    - Harmonogram w Supabase (pg_cron + pg_net, sekret w Vault): ostoja-expire-offers, ostoja-powiadomienia (co minutę),
      ostoja-retencja (codziennie 3:15 UTC).
    - Do zrobienia przez właściciela (docs/supabase-szablony-email.md): wyłączyć rejestrację, Site URL i Redirect URLs,
      szablon Magic Link, **własny SMTP** (wbudowana poczta Supabase wysyła tylko do członków zespołu projektu).
+     Kolejność: „Authenticate this email domain” w Brevo → nadawca logowanie@ostoja.org → klucz SMTP → SMTP w Supabase
+     (smtp-relay.brevo.com:587) → Site URL https://ostoja.org, Redirect URLs https://ostoja.org/** i https://ostoja-cyan.vercel.app/**.
+     W Brevo wyłączyć śledzenie kliknięć w e-mailach transakcyjnych (link logowania nie powinien przechodzić przez przekierowanie).
 2. Przejść scenariusze z arkusza z 1–2 zakładami; uwagi do zakładki Spotkania, błędy do zakładki Błędy.
    Nowe scenariusze do arkusza: wstrzymanie i odwołanie, wniosek RODO, podgląd błędów, klepsydra (edycja, druk, publikacja,
    udostępnienie). Zapytać zakłady: czy dodać zdjęcie zmarłego na klepsydrze (wymaga przechowywania plików i zgody rodziny).
