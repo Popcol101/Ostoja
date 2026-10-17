@@ -20,8 +20,10 @@ Zakres i bolączki: docs/zakres-panelu-v1.md (do dodania z dokumentu „Ostoja �
   `set local role authenticated` i `request.jwt.claims` — dokładnie jak Supabase, więc RLS działa.
   Strona dla rodzin używa roli `anon` i wyłącznie funkcji security definer (create_inquiry, search_homes,
   family_get_order, family_update_order, public_memorial).
-- Logowanie w prototypie: tryb demo (wybór konta testowego, tylko gdy DEMO_MODE=true).
-  Docelowo: Supabase Auth (link magiczny), ten sam `auth.users`.
+- Logowanie: e-mail i hasło przez Supabase Auth (min. 12 znaków, odrzucamy hasła z wycieków – HIBP),
+  „Nie pamiętam hasła” = link e-mailem. Konto z hasłem powstaje przy przyjęciu zaproszenia (link e-mailem, 7 dni).
+  E-maile wysyła aplikacja przez API Brevo (src/lib/mail.ts); szablonów e-maili Supabase nie używamy.
+  Tryb demo (konta testowe @….test jednym kliknięciem) tylko gdy DEMO_MODE=true.
 - Walidacja: zod. PDF: @react-pdf/renderer. Push: web-push. SMS: SMSAPI. iCal: ical-generator.
 - Testy: tests/db/run.sh (SQL, RLS i logika bazy), Vitest (logika TS), Playwright (E2E).
 

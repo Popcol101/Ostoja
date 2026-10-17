@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { RedirectType, redirect } from "next/navigation";
 import { z } from "zod";
-import { userFacingDbError, withUser } from "@/lib/db";
+import { asServer, userFacingDbError, withUser } from "@/lib/db";
+import { deliverInvitation } from "@/lib/invite-mail";
 import { slugify } from "@/lib/format";
 import { withMessage } from "@/lib/messages";
 import { requireAdmin } from "@/lib/session";
@@ -133,6 +134,11 @@ export async function inviteToHome(formData: FormData) {
       return row.token;
     }),
   );
+  revalidatePath(path);
+  const [home] = await asServer((tx) => tx<{ name: string }[]>`select name from funeral_homes where id = ${homeId}`);
+  const sent = await deliverInvitation({ token, email: d.email, name: d.display_name, role: d.role, homeName: home?.name ?? "Ostoja" });
+  if (sent === "wyslane") back(path, "ok", "Zaproszenie wysłane e-mailem. Link do ustawienia hasła działa 7 dni.");
+  if (sent === "blad") back(path, "blad", "Nie udało się wysłać e-maila z zaproszeniem. Spróbuj ponownie za chwilę.");
   (await cookies()).set(INVITE_COOKIE, JSON.stringify({ token, name: d.display_name, email: d.email }), {
     httpOnly: true,
     sameSite: "strict",
@@ -140,7 +146,6 @@ export async function inviteToHome(formData: FormData) {
     path,
     maxAge: 15 * 60,
   });
-  revalidatePath(path);
   back(path, "ok", "Zaproszenie gotowe. Wyślij link tej osobie – działa 7 dni.");
 }
 

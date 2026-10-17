@@ -47,7 +47,8 @@ export default function PrivacyPage() {
       <p>
         Korzystamy z usług zewnętrznych firm, które przetwarzają dane w naszym imieniu: Supabase (baza danych, serwery we Frankfurcie), Vercel
         (serwer strony, region Frankfurt; firma z USA – przekazanie danych na podstawie Ram ochrony danych UE–USA i standardowych klauzul
-        umownych), SMSAPI (wysyłka SMS, Polska) oraz [dostawca poczty – DO UZUPEŁNIENIA].
+        umownych), SMSAPI (wysyłka SMS, Polska) oraz Brevo (wysyłka e-maili do pracowników zakładów – zaproszenia i linki do ustawienia
+        hasła, Francja/UE).
       </p>
 
       <h2>Jak długo</h2>

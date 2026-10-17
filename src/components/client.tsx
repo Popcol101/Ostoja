@@ -148,3 +148,47 @@ export function useReportError(error: Error & { digest?: string }) {
     }
   }, [error]);
 }
+
+/** Pole hasła z przyciskiem „Pokaż” – łatwiej wpisać długie hasło na telefonie. */
+export function PasswordInput({
+  id,
+  name,
+  autoComplete,
+  describedBy,
+  minLength,
+}: {
+  id: string;
+  name: string;
+  autoComplete: "current-password" | "new-password";
+  describedBy?: string;
+  minLength?: number;
+}) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="flex gap-2">
+      <input
+        id={id}
+        name={name}
+        type={visible ? "text" : "password"}
+        autoComplete={autoComplete}
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        required
+        minLength={minLength}
+        maxLength={200}
+        aria-describedby={describedBy}
+        className="min-h-12 w-full min-w-0 rounded-[10px] border border-field bg-card px-3.5 text-[16px] text-ink"
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        aria-controls={id}
+        aria-label={visible ? "Ukryj hasło" : "Pokaż hasło"}
+        className="min-h-12 min-w-[76px] shrink-0 rounded-[10px] border border-field bg-card px-3 text-[15px] font-semibold text-brand"
+      >
+        {visible ? "Ukryj" : "Pokaż"}
+      </button>
+    </div>
+  );
+}

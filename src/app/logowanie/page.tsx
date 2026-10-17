@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { SubmitButton } from "@/components/client";
+import Link from "next/link";
+import { PasswordInput, SubmitButton } from "@/components/client";
 import { Flash, type SearchParams } from "@/components/flash";
 import { Logo, OPIEKUN_PHONE } from "@/components/site";
 import { Field, Input, Notice } from "@/components/ui";
@@ -7,7 +8,7 @@ import { emailLoginEnabled } from "@/lib/auth";
 import { asServer } from "@/lib/db";
 import { ROLE_LABEL } from "@/lib/labels";
 import { demoModeEnabled } from "@/lib/session";
-import { loginDemo, sendLoginLink } from "./actions";
+import { loginDemo, loginWithPassword } from "./actions";
 
 export const metadata: Metadata = { title: "Logowanie do panelu" };
 export const dynamic = "force-dynamic";
@@ -31,13 +32,24 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
         <Flash searchParams={searchParams} />
 
         {emailLogin ? (
-          <form action={sendLoginLink} className="flex flex-col gap-4 rounded-[14px] border border-line bg-card p-5">
-            <Field id="email" label="Twój e-mail" hint="Wyślemy link do logowania. Bez hasła.">
-              <Input id="email" name="email" type="email" autoComplete="email" inputMode="email" required aria-describedby="email-hint" />
+          <form action={loginWithPassword} className="flex flex-col gap-4 rounded-[14px] border border-line bg-card p-5">
+            <Field id="email" label="E-mail">
+              <Input id="email" name="email" type="email" autoComplete="username" inputMode="email" required maxLength={200} />
             </Field>
-            <SubmitButton full pendingLabel="Wysyłam…">
-              Wyślij link
+            <Field id="password" label="Hasło">
+              <PasswordInput id="password" name="password" autoComplete="current-password" />
+            </Field>
+            <SubmitButton full pendingLabel="Loguję…">
+              Zaloguj się
             </SubmitButton>
+            <p className="text-[15px]">
+              <Link href="/logowanie/haslo" className="inline-flex min-h-11 items-center font-semibold text-brand underline underline-offset-4">
+                Nie pamiętam hasła
+              </Link>
+            </p>
+            <p className="text-[14px] text-muted">
+              Pierwsze logowanie? Hasło ustawiasz z linku w e-mailu z zaproszeniem. Konto bez hasła – kliknij „Nie pamiętam hasła”.
+            </p>
           </form>
         ) : null}
 

@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { MESSAGES, messageCode, messageText, withMessage } from "./messages";
+import { PASSWORD_MESSAGE } from "./password";
 
 describe("komunikaty po akcjach", () => {
   it("zamienia znany tekst na kod i z powrotem", () => {
@@ -39,5 +40,19 @@ describe("komunikaty po akcjach", () => {
       }
     }
     expect(missing).toEqual([]);
+  });
+
+  it("ma tekst dla każdego komunikatu z akcji serwera (back, fail, zod) i dla błędów hasła", () => {
+    const walk = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(`${dir}/${e.name}`) : [`${dir}/${e.name}`]));
+    const texts: string[] = [];
+    for (const file of walk("src/app").filter((f) => f.endsWith("actions.ts"))) {
+      const src = readFileSync(file, "utf8");
+      const patterns = [/"(?:ok|blad)",\s*"([^"]+)"/g, /fail\("([^"]+)"/g, /message: "([^"]+)"/g, /[?:]\s*"([A-ZŻŹĆĄŚĘŁÓŃ][^"]+[.])"/g];
+      for (const re of patterns) for (const m of src.matchAll(re)) texts.push(m[1]);
+    }
+    texts.push(...Object.values(PASSWORD_MESSAGE));
+    expect(texts.length).toBeGreaterThan(40);
+    expect(texts.filter((x) => messageCode(x) === "blad-zapisu" && x !== MESSAGES["blad-zapisu"])).toEqual([]);
   });
 });

@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { RedirectType, redirect } from "next/navigation";
 import { z } from "zod";
 import { userFacingDbError, withUser } from "@/lib/db";
+import { deliverInvitation } from "@/lib/invite-mail";
 import { withMessage } from "@/lib/messages";
 import { requireMember } from "@/lib/session";
 import { INVITE_COOKIE } from "@/lib/team";
@@ -41,15 +42,18 @@ export async function inviteMember(formData: FormData) {
       return row.token;
     }),
   );
-  const jar = await cookies();
-  jar.set(INVITE_COOKIE, JSON.stringify({ token, name: d.display_name, email: d.email }), {
+  revalidatePath(PATH);
+  const sent = await deliverInvitation({ token, email: d.email, name: d.display_name, role: d.role, homeName: me.homeName });
+  if (sent === "wyslane") back("ok", "Zaproszenie wysłane e-mailem. Link do ustawienia hasła działa 7 dni.");
+  if (sent === "blad") back("blad", "Nie udało się wysłać e-maila z zaproszeniem. Spróbuj ponownie za chwilę.");
+  // Bez poczty (wersja lokalna): link do skopiowania, pokazany raz.
+  (await cookies()).set(INVITE_COOKIE, JSON.stringify({ token, name: d.display_name, email: d.email }), {
     httpOnly: true,
     sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
     path: PATH,
     maxAge: 15 * 60,
   });
-  revalidatePath(PATH);
   back("ok", "Zaproszenie gotowe. Wyślij link tej osobie – działa 7 dni.");
 }
 

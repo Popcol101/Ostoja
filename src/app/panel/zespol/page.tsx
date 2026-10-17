@@ -6,6 +6,7 @@ import { Flash, type SearchParams } from "@/components/flash";
 import { Badge, Card, CardTitle, EmptyState, Field, Input, Notice, PageTitle, Select } from "@/components/ui";
 import { withUser } from "@/lib/db";
 import { formatDate } from "@/lib/format";
+import { mailEnabled } from "@/lib/mail";
 import { ROLE_LABEL } from "@/lib/labels";
 import { requireMember } from "@/lib/session";
 import { INVITE_COOKIE, ROLE_DESCRIPTION, inviteLink } from "@/lib/team";
@@ -26,6 +27,7 @@ export default async function TeamPage({ searchParams }: { searchParams: SearchP
   }));
   const fresh = owner ? parseInviteCookie((await cookies()).get(INVITE_COOKIE)?.value) : null;
   const freshUrl = fresh ? inviteLink(fresh.token) : null;
+  const byMail = mailEnabled();
   return (
     <>
       <PageTitle sub={`${members.length} ${members.length === 1 ? "osoba ma" : members.length < 5 ? "osoby mają" : "osób ma"} dostęp do panelu`}>
@@ -81,7 +83,11 @@ export default async function TeamPage({ searchParams }: { searchParams: SearchP
                 <Field id="display_name" label="Imię i nazwisko">
                   <Input id="display_name" name="display_name" required minLength={2} maxLength={120} autoComplete="off" />
                 </Field>
-                <Field id="email" label="E-mail służbowy" hint="Na ten adres przyjdzie link do logowania.">
+                <Field
+                  id="email"
+                  label="E-mail służbowy"
+                  hint={byMail ? "Na ten adres wyślemy zaproszenie z linkiem do ustawienia hasła." : "Tym adresem ta osoba będzie się logować."}
+                >
                   <Input id="email" name="email" type="email" required autoComplete="off" aria-describedby="email-hint" />
                 </Field>
                 <Field id="role" label="Rola">
@@ -101,7 +107,7 @@ export default async function TeamPage({ searchParams }: { searchParams: SearchP
                     ))}
                   </dl>
                 </Field>
-                <SubmitButton pendingLabel="Tworzę…">Utwórz zaproszenie</SubmitButton>
+                <SubmitButton pendingLabel={byMail ? "Wysyłam…" : "Tworzę…"}>{byMail ? "Wyślij zaproszenie" : "Utwórz zaproszenie"}</SubmitButton>
               </form>
             </Card>
 
@@ -121,12 +127,24 @@ export default async function TeamPage({ searchParams }: { searchParams: SearchP
                           <span className="break-all">{i.email}</span> · ważne do {formatDate(i.expires_at)}
                         </p>
                       </div>
-                      <form action={revokeInvitation}>
-                        <input type="hidden" name="id" value={i.id} />
-                        <SubmitButton variant="secondary" pendingLabel="Odwołuję…">
-                          Odwołaj
-                        </SubmitButton>
-                      </form>
+                      <div className="flex flex-wrap gap-2">
+                        {byMail ? (
+                          <form action={inviteMember}>
+                            <input type="hidden" name="display_name" value={i.display_name} />
+                            <input type="hidden" name="email" value={i.email} />
+                            <input type="hidden" name="role" value={i.role} />
+                            <SubmitButton variant="secondary" pendingLabel="Wysyłam…">
+                              Wyślij ponownie
+                            </SubmitButton>
+                          </form>
+                        ) : null}
+                        <form action={revokeInvitation}>
+                          <input type="hidden" name="id" value={i.id} />
+                          <SubmitButton variant="secondary" pendingLabel="Odwołuję…">
+                            Odwołaj
+                          </SubmitButton>
+                        </form>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -143,8 +161,10 @@ export default async function TeamPage({ searchParams }: { searchParams: SearchP
       {owner ? (
         <div className="mt-4">
           <Notice title="Jak działa zaproszenie">
-            Tworzysz link i wysyłasz go SMS-em albo e-mailem. Osoba otwiera link, przyjmuje zaproszenie i loguje się linkiem z e-maila –
-            bez haseł. Przy kilku zaproszeniach na ten sam adres działa tylko ostatnie.
+            {byMail
+              ? "Wysyłamy e-mail z linkiem. Osoba otwiera go, ustawia hasło i od razu jest w panelu. Potem loguje się tym adresem e-mail i hasłem."
+              : "Tworzysz link i wysyłasz go SMS-em albo e-mailem. Osoba otwiera link, ustawia hasło i od razu jest w panelu."}{" "}
+            Link działa 7 dni. Przy kilku zaproszeniach na ten sam adres działa tylko ostatnie.
           </Notice>
         </div>
       ) : null}

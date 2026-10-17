@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { lastMail } from "./mail";
 
 // Panel administratora Ostoi: ręczne dodanie partnera, zaproszenie właściciela, weryfikacja, zapytania do opiekuna.
 
@@ -55,21 +56,23 @@ test("administratorka dodaje partnera, zaprasza właściciela i weryfikuje zakł
   await page.getByLabel("Imię i nazwisko").fill("Jan Właściciel");
   await page.getByLabel("E-mail", { exact: true }).fill(p.owner);
   await expect(page.getByLabel("Rola")).toHaveValue("wlasciciel");
-  await page.getByRole("button", { name: "Utwórz zaproszenie" }).click();
-  await expect(page.getByText("Zaproszenie gotowe.", { exact: false })).toBeVisible();
-  const link = (await page.locator("p.font-mono").innerText()).replace(/^https?:\/\/[^/]+/, "http://localhost:3100");
+  await page.getByRole("button", { name: "Wyślij zaproszenie" }).click();
+  await expect(page.getByText("Zaproszenie wysłane e-mailem. Link do ustawienia hasła działa 7 dni.")).toBeVisible();
+  const mail = await lastMail(page.request, p.owner);
+  expect(mail.subject).toBe(`Zaproszenie do panelu Ostoi – ${p.name}`);
+  expect(mail.tags).toEqual(["zaproszenie"]);
+  expect(mail.path).toMatch(/^\/zaproszenie\?t=[A-Za-z0-9_-]{40,60}$/);
   await shot(page, "18-admin-zaklad");
 
-  // Właściciel przyjmuje i loguje się linkiem z e-maila (atrapa Supabase).
+  // Właściciel otwiera link z e-maila, ustawia hasło i od razu jest w panelu (atrapa Supabase).
   const ctx = await browser.newContext();
   const owner = await ctx.newPage();
-  await owner.goto(link);
+  await owner.goto(mail.path);
   await owner.waitForLoadState("networkidle");
   await expect(owner.getByRole("heading", { name: `${p.name} zaprasza Cię do panelu Ostoi` })).toBeVisible();
-  await owner.getByRole("button", { name: "Przyjmij zaproszenie" }).click();
-  await expect(owner.getByText("Zaproszenie przyjęte.", { exact: false })).toBeVisible();
-  await owner.goto(`/logowanie/potwierdz?token_hash=${"c".repeat(56)}`);
-  await owner.getByRole("button", { name: "Zaloguj się" }).click();
+  await owner.getByLabel("Hasło", { exact: true }).fill("dwa koty i pies 2026");
+  await owner.getByLabel("Powtórz hasło", { exact: true }).fill("dwa koty i pies 2026");
+  await owner.getByRole("button", { name: "Ustaw hasło i dołącz" }).click();
   await expect(owner).toHaveURL(/\/panel\/zapytania/);
   await expect(owner.getByText(p.name).first()).toBeVisible();
   await owner.goto("/admin");

@@ -1,63 +1,52 @@
-# E-maile logowania w Supabase Auth
+# E-maile i logowanie
 
-Ostoja wysyła przez Supabase Auth tylko jeden rodzaj wiadomości: link logowania do panelu („Magic Link”).
-Konta zakładów zakłada opiekun albo właściciel zaproszeniem, więc rejestracja jest wyłączona, a szablon
-„Confirm signup” nie jest używany.
+Od 17.10.2026 zakłady logują się **e-mailem i hasłem**. Wszystkie e-maile wysyła aplikacja przez API Brevo
+(`src/lib/mail.ts`, treść w `src/lib/emails.ts`). Supabase Auth tylko trzyma konta i sprawdza hasła –
+jego szablony e-maili (Magic Link, Invite, Reset password) **nie są używane**.
 
-## 1. Ustawienia (Authentication)
+## Jak to działa
+
+| Sytuacja | Co się dzieje |
+| --- | --- |
+| Zaproszenie (właściciel w /panel/zespol albo administrator w /admin/zaklady/…) | Aplikacja tworzy zaproszenie (7 dni) i wysyła e-mail „Zaproszenie do panelu Ostoi – {zakład}” z linkiem `/zaproszenie?t=…`. „Wyślij ponownie” unieważnia poprzedni link. |
+| Nowa osoba otwiera link | Ustawia hasło (min. 12 znaków, nie z wycieków). Aplikacja zakłada konto z hasłem (Admin API) i od razu loguje. |
+| Osoba z kontem w Ostoi (np. pracuje w dwóch zakładach) | Na stronie zaproszenia wpisuje swoje hasło i dołącza do kolejnego zakładu. |
+| Logowanie | `/logowanie`: e-mail i hasło. 30 prób na 15 minut z jednego adresu IP. |
+| „Nie pamiętam hasła” | `/logowanie/haslo` → e-mail „Ustaw hasło do panelu Ostoi” z linkiem `/logowanie/nowe-haslo?token_hash=…` (godzina, jednorazowy, token z Admin API `generate_link`, typ recovery). Ten sam komunikat dla nieznanych adresów. |
+| Konto bez hasła (założone przed 17.10.2026) | Używa „Nie pamiętam hasła”. |
+
+Otwarcie linku nic nie zmienia – zaproszenie przyjmuje się i token zużywa dopiero po wysłaniu formularza,
+więc skanery poczty, które same otwierają linki, ich nie zepsują.
+
+## Ustawienia
+
+**Vercel (zmienne środowiskowe, Production i Preview):**
+
+| Zmienna | Wartość |
+| --- | --- |
+| `BREVO_API_KEY` | klucz z Brevo → SMTP & API → API Keys → Generate a new API key (typ **Sensitive**, wpisuje właściciel) |
+| `MAIL_FROM` | `logowanie@ostoja.org` |
+| `MAIL_FROM_NAME` | `Ostoja` (domyślnie) |
+
+Bez `BREVO_API_KEY` panel pokazuje link zaproszenia do skopiowania, a „Nie pamiętam hasła” jest niedostępne.
+
+**Supabase (Authentication):**
 
 | Gdzie | Wartość |
 | --- | --- |
-| Sign In / Providers → Email → Allow new users to sign up | **wyłączone** |
-| Sign In / Providers → Email → Confirm email | włączone (domyślnie) |
+| Sign In / Providers → Email → Allow new users to sign up | **wyłączone** (konta zakłada aplikacja) |
+| Sign In / Providers → Email → Confirm email | włączone (konta z aplikacji są od razu potwierdzone) |
+| Sign In / Providers → Email → Minimum password length | 12 |
 | URL Configuration → Site URL | `https://ostoja.org` |
-| URL Configuration → Redirect URLs | `https://ostoja.org/**`, `https://ostoja-cyan.vercel.app/**` |
-| Emails → SMTP Settings | własny serwer SMTP – patrz punkt 3 |
+| Emails → SMTP Settings | Brevo (`smtp-relay.brevo.com:587`) – zostaje jako zapas, Supabase nic nie wysyła |
 
-## 2. Szablon „Magic Link” (Authentication → Emails → Magic Link)
+**Brevo:** domena `ostoja.org` uwierzytelniona (DKIM, DMARC), nadawca `logowanie@ostoja.org`.
+Brevo nie pozwala wyłączyć śledzenia kliknięć dla pojedynczej wiadomości – link w e-mailu może przechodzić przez
+przekierowanie Brevo. Jeśli w ustawieniach konta jest opcja wyłączenia śledzenia dla e-maili transakcyjnych, wyłącz ją.
 
-**Temat:** `Link do panelu Ostoi`
+## Hasła
 
-**Treść (HTML):**
-
-```html
-<div style="background:#ECEDEB;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;color:#1E2422">
-  <div style="max-width:480px;margin:0 auto;background:#FFFFFF;border:1px solid #D8DAD7;border-radius:14px;padding:28px 24px">
-    <p style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#1E2422">Ostoja</p>
-    <p style="margin:0 0 16px;font-size:16px;line-height:1.5">Dzień dobry,</p>
-    <p style="margin:0 0 24px;font-size:16px;line-height:1.5">
-      oto link do panelu zakładu w Ostoi. Działa przez godzinę i tylko raz.
-    </p>
-    <p style="margin:0 0 24px">
-      <a href="{{ .SiteURL }}/logowanie/potwierdz?token_hash={{ .TokenHash }}&type=email"
-         style="display:inline-block;background:#3F5650;color:#FFFFFF;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 22px;border-radius:10px">
-        Zaloguj się do panelu
-      </a>
-    </p>
-    <p style="margin:0;font-size:14px;line-height:1.5;color:#5C6461">
-      Jeśli to nie Ty prosiłeś o link, zignoruj tę wiadomość – bez kliknięcia nikt się nie zaloguje.
-    </p>
-  </div>
-</div>
-```
-
-Szablon można zmienić dopiero po zapisaniu własnego SMTP (od 3.06.2026 nowe projekty Free z wbudowaną pocztą Supabase
-mają szablony zablokowane). Na telefonie treść edytuje się w zakładce „Source”, nie „Preview”. Telefon opiekuna dopiszemy,
-gdy będzie znany.
-
-Link prowadzi do strony `/logowanie/potwierdz`, która loguje dopiero po kliknięciu przycisku. Dzięki temu skanery
-poczty (otwierające linki automatycznie) nie zużyją jednorazowego linku.
-
-## 3. Własny serwer SMTP – potrzebny, zanim zalogują się zakłady
-
-Wbudowana poczta Supabase wysyła wiadomości **tylko na adresy członków zespołu projektu** w Supabase
-(Organization → Team) i najwyżej kilka na godzinę. Link do zakładu z innym adresem po prostu nie dojdzie.
-Na testy z zakładami trzeba podłączyć dostawcę poczty (Emails → SMTP Settings → Enable custom SMTP):
-
-- dostawca z serwerami w UE i umową powierzenia (np. Brevo, Mailjet; albo Resend, Postmark – wtedy przekazanie poza UE
-  trzeba opisać w polityce prywatności),
-- nadawca: adres w domenie Ostoi (np. `panel@twoja-domena.pl`) z rekordami SPF i DKIM ustawionymi u dostawcy domeny,
-- nazwa nadawcy: `Ostoja`.
-
-Do czasu podłączenia SMTP zakłady i opiekunowie logują się kontami testowymi na `/logowanie` (tryb demo).
-Źródło: dokumentacja Supabase, „Send emails with custom SMTP” (https://supabase.com/docs/guides/auth/auth-smtp).
+- Co najmniej 12 znaków, najwyżej 72 bajty (limit bcrypt w Supabase). Bez wymogów typu „wielka litera i cyfra”.
+- Odrzucamy hasła z wycieków: do Have I Been Pwned trafia tylko 5 znaków skrótu SHA-1 (k-anonimowość).
+  Gdy serwis nie odpowiada, hasło przechodzi. `PWNED_CHECK=off` wyłącza sprawdzenie (testy).
+- Pole „Pokaż” przy haśle – łatwiej wpisać długie hasło na telefonie.

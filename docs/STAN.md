@@ -79,6 +79,17 @@ Testy: `npm test` (48), `npm run test:db` (13/13), `npm run e2e` (40/40 na 390 i
 
 Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, panel /admin.
 
+### Logowanie hasłem i zaproszenia e-mailem (17.10.2026)
+- Logowanie e-mailem i hasłem (Supabase Auth, `/logowanie`), „Nie pamiętam hasła” (`/logowanie/haslo` → e-mail →
+  `/logowanie/nowe-haslo`, token recovery z Admin API, godzina, jednorazowy). Logowanie linkiem z e-maila usunięte.
+- Zaproszenia (panel właściciela i administrator) idą e-mailem przez API Brevo (src/lib/mail.ts, src/lib/emails.ts);
+  link prowadzi do ustawienia hasła, konto powstaje z hasłem i od razu loguje. Osoba z kontem dołącza swoim hasłem.
+  „Wyślij ponownie” przy zaproszeniu w drodze. Bez BREVO_API_KEY – link do skopiowania jak wcześniej.
+- Hasła: min. 12 znaków, max 72 bajty, odrzucane hasła z wycieków (HIBP, k-anonimowość), pole „Pokaż”.
+- Szczegóły i ustawienia: docs/supabase-szablony-email.md. Testy: Vitest (auth, mail, hasła), E2E z atrapą Brevo.
+- Olek Masłowski (olek.maslowski101@gmail.com) jest administratorem Ostoi na Supabase; konto założone przed zmianą –
+  hasło ustawia przez „Nie pamiętam hasła”.
+
 ### Decyzje i znane ograniczenia
 - Komunikaty po akcjach: w adresie tylko kod (`?ok=umowa-podpisana`), teksty w src/lib/messages.ts.
 - Bez `loading.tsx`: w Next.js 15.5 granica ładowania gubi przekierowanie po akcji serwerowej (wykryte w E2E).
@@ -114,7 +125,9 @@ Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, pan
    - 17.10.2026: SMTP Brevo i ustawienia Auth zrobione przez właściciela. Test na produkcji przeszedł: zaproszenie
      (Dom Pogrzebowy Cisza, rola biuro) → konto przez Admin API → e-mail „Link do panelu Ostoi” w Gmailu w Odebranych,
      SPF/DKIM/DMARC = pass → logowanie do panelu. Do poprawy: Brevo nadal dokleja piksel otwarć i przekierowanie kliknięć
-     (sendibt2.com) – wyłączyć śledzenie w Brevo.
+     (sendibt2.com) – wyłączyć śledzenie w Brevo (per wiadomość API Brevo tego nie pozwala).
+   - **Do zrobienia przez właściciela:** BREVO_API_KEY w Vercel (Sensitive, Production i Preview) i redeploy;
+     Supabase → Authentication → Email → Minimum password length = 12. MAIL_FROM=logowanie@ostoja.org już ustawione.
 2. Przejść scenariusze z arkusza z 1–2 zakładami; uwagi do zakładki Spotkania, błędy do zakładki Błędy.
    Nowe scenariusze do arkusza: wstrzymanie i odwołanie, wniosek RODO, podgląd błędów, klepsydra (edycja, druk, publikacja,
    udostępnienie). Zapytać zakłady: czy dodać zdjęcie zmarłego na klepsydrze (wymaga przechowywania plików i zgody rodziny).

@@ -9,6 +9,7 @@ import { withUser } from "@/lib/db";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { ROLE_LABEL, SUSPENSION_GROUND_LABEL } from "@/lib/labels";
 import { requireAdmin } from "@/lib/session";
+import { mailEnabled } from "@/lib/mail";
 import { INVITE_COOKIE, inviteLink } from "@/lib/team";
 import { inviteToHome, setVerified, suspendHome } from "../../actions";
 
@@ -207,8 +208,9 @@ export default async function AdminHome({ params, searchParams }: { params: Prom
                   <option value="ekipa">{ROLE_LABEL.ekipa}</option>
                 </Select>
               </Field>
-              <SubmitButton variant="secondary" pendingLabel="Tworzę…">
-                Utwórz zaproszenie
+              {mailEnabled() ? <p className="text-[14px] text-muted">Wyślemy e-mail z linkiem do ustawienia hasła. Link działa 7 dni.</p> : null}
+              <SubmitButton variant="secondary" pendingLabel={mailEnabled() ? "Wysyłam…" : "Tworzę…"}>
+                {mailEnabled() ? "Wyślij zaproszenie" : "Utwórz zaproszenie"}
               </SubmitButton>
             </form>
           </Card>

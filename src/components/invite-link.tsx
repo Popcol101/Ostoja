@@ -4,12 +4,12 @@ import { Card, CardTitle, LinkButton } from "./ui";
 
 /** Świeżo utworzony link zaproszenia: kopiowanie, SMS, e-mail. Token pokazujemy tylko raz, zaraz po utworzeniu. */
 export function InviteLinkCard({ url, name, email, homeName }: { url: string; name: string; email: string; homeName: string }) {
-  const message = `Dzień dobry, zapraszam Cię do panelu Ostoi (${homeName}). Otwórz link i kliknij „Przyjmij zaproszenie”: ${url}`;
+  const message = `Dzień dobry, zapraszam Cię do panelu Ostoi (${homeName}). Otwórz link i ustaw hasło: ${url}`;
   return (
     <Card className="mb-4 border-brand">
       <CardTitle>Link zaproszenia dla: {name}</CardTitle>
       <p className="mb-3 text-[15px] text-muted">
-        Wyślij go tylko tej osobie. Link jest ważny 7 dni i działa raz. Po przyjęciu {email} zaloguje się linkiem z e-maila.
+        Wyślij go tylko tej osobie. Link jest ważny 7 dni i działa raz. Po otwarciu ta osoba ustawi hasło i będzie logować się adresem {email}.
       </p>
       <p className="mb-3 break-all rounded-[10px] bg-ground-family px-3 py-2.5 font-mono text-[13px]">{url}</p>
       <div className="flex flex-wrap gap-2">
