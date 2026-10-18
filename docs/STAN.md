@@ -90,6 +90,18 @@ Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, pan
 - Olek Masłowski (olek.maslowski101@gmail.com) jest administratorem Ostoi na Supabase; konto założone przed zmianą –
   hasło ustawia przez „Nie pamiętam hasła”.
 
+### Przegląd bezpieczeństwa i test penetracyjny (18.10.2026)
+- Test penetracyjny lokalnej kopii: sweep RLS/IDOR `tests/security/rls_sweep.sql` + próby HTTP na uruchomionej aplikacji.
+- Znalezione i naprawione (migracja `20261018000100_column_privileges`, test `14_column_privileges`):
+  właściciel mógł sam ustawić verified_at/rating/reviews_count; ekipa mogła zmienić offer_id, zgody rodziny,
+  token i telefon rodziny w orders. Uprawnienia UPDATE zwężone do kolumn, które zapisuje panel.
+- Wytrzymało: izolacja między zakładami (RLS), anon bez dostępu do tabel, bramki /panel i /admin, CSRF (Server
+  Actions + /api/bledy), nagłówki/CSP z nonce, fałszywe tokeny rodziny, odbicie XSS.
+- Dokument „Ostoja – ochrona danych, szyfrowanie i testy penetracyjne” (architektura, szyfrowanie, wyniki, plan).
+- **Do zrobienia przez właściciela:** wgrać migrację 20261018000100 na projekcie Supabase (wdrożenie na żywy projekt
+  zostało zablokowane jako zmiana produkcyjna); uruchomić uzupelnienie-2026-10-16.sql (pg_net ze schematu public);
+  w Supabase Auth włączyć ochronę przed hasłami z wycieków i Minimum password length = 12.
+
 ### Decyzje i znane ograniczenia
 - Komunikaty po akcjach: w adresie tylko kod (`?ok=umowa-podpisana`), teksty w src/lib/messages.ts.
 - Bez `loading.tsx`: w Next.js 15.5 granica ładowania gubi przekierowanie po akcji serwerowej (wykryte w E2E).
