@@ -29,6 +29,9 @@ type FamilyOrder = {
   died_at: string | null;
   principal_name: string;
   principal_email: string | null;
+  principal_street: string | null;
+  principal_post_code: string | null;
+  principal_city: string | null;
   zus_bank_account: string | null;
   selected_items: string[];
   total_pln: number | null;
@@ -248,6 +251,21 @@ export default async function FamilyOrderPage({ params, searchParams }: { params
                     aria-describedby="principal_email-hint"
                   />
                 </Field>
+                <fieldset className="flex flex-col gap-3">
+                  <legend className="mb-1 font-semibold">Twój adres</legend>
+                  <p className="-mt-1 text-sm text-muted">Do faktury za pogrzeb i do wniosku o zasiłek.</p>
+                  <Field id="principal_street" label="Ulica i numer">
+                    <Input id="principal_street" name="principal_street" autoComplete="street-address" defaultValue={order.principal_street ?? ""} maxLength={120} />
+                  </Field>
+                  <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3">
+                    <Field id="principal_post_code" label="Kod pocztowy">
+                      <Input id="principal_post_code" name="principal_post_code" autoComplete="postal-code" inputMode="numeric" placeholder="00-000" defaultValue={order.principal_post_code ?? ""} maxLength={6} />
+                    </Field>
+                    <Field id="principal_city" label="Miejscowość">
+                      <Input id="principal_city" name="principal_city" autoComplete="address-level2" defaultValue={order.principal_city ?? ""} maxLength={80} />
+                    </Field>
+                  </div>
+                </fieldset>
                 <Field id="zus_bank_account" label="Numer konta do wypłaty zasiłku" hint="26 cyfr. Jeśli zakład składa wniosek za Ciebie, ZUS wypłaci mu zasiłek, a Ty dopłacasz tylko różnicę.">
                   <Input
                     id="zus_bank_account"

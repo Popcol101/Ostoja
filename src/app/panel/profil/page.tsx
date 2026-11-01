@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SubmitButton } from "@/components/client";
 import { Flash, type SearchParams } from "@/components/flash";
-import { Card, CardTitle, Field, Input, PageTitle, Textarea } from "@/components/ui";
+import { Card, CardTitle, Field, Input, PageTitle, Select, Textarea } from "@/components/ui";
 import { withUser } from "@/lib/db";
-import { formatDate, formatPln } from "@/lib/format";
+import { formatBankAccount, formatDate, formatPln } from "@/lib/format";
 import { FUNERAL_BENEFIT_PLN } from "@/lib/labels";
 import { requireMember } from "@/lib/session";
-import { updatePrices, updateProfile } from "../actions";
+import { disconnectInvoicing, saveInvoicing, updatePrices, updateProfile } from "../actions";
+import { integrationsEnabled } from "@/lib/crypto";
 import { PushToggle } from "../push-toggle";
 
 export const metadata: Metadata = { title: "Profil i cennik" };
@@ -25,7 +26,10 @@ type Home = {
   verified_at: Date | null;
   rating: number | null;
   reviews_count: number;
+  regon: string | null;
+  bank_account: string | null;
 };
+type Invoicing = { provider: string; account: string; secret_hint: string; vat_rate: "8" | "23" | "zw"; auto_issue: boolean; ksef_b2c: boolean; updated_at: Date };
 type ReviewRow = { order_id: string; rating: number; comment: string | null; updated_at: Date; hidden_at: Date | null; deceased: string | null };
 type PriceRow = { item_key: string; label: string; for_burial: string; optional: boolean; price_pln: number | null };
 
@@ -33,7 +37,7 @@ const FOR_LABEL: Record<string, string> = { wszystkie: "każdy pogrzeb", tradycy
 
 export default async function ProfilePage({ searchParams }: { searchParams: SearchParams }) {
   const me = await requireMember();
-  const { home, prices, quotes, devices, reviews } = await withUser(me.userId, async (tx) => {
+  const { home, prices, quotes, devices, reviews, invoicing } = await withUser(me.userId, async (tx) => {
     const [home] = await tx<Home[]>`select * from funeral_homes where id = ${me.homeId}`;
     const prices = await tx<PriceRow[]>`
       select c.item_key, c.label, c.for_burial, c.optional, p.price_pln
@@ -51,7 +55,10 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
       from home_reviews r join orders o on o.id = r.order_id
       where r.home_id = ${me.homeId}
       order by r.updated_at desc limit 50`;
-    return { home, prices, quotes, devices, reviews };
+    const [invoicing] = await tx<Invoicing[]>`
+      select provider, account, secret_hint, vat_rate, auto_issue, ksef_b2c, updated_at
+      from invoicing_connections where home_id = ${me.homeId}`;
+    return { home, prices, quotes, devices, reviews, invoicing: invoicing ?? null };
   });
   const canEdit = me.role !== "ekipa";
 
@@ -116,6 +123,12 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
                 <input type="checkbox" name="has_farewell_hall" value="tak" defaultChecked={home.has_farewell_hall} className="size-5 accent-brand" />
                 Mamy własną salę pożegnań
               </label>
+              <Field label="REGON" id="regon" hint="Do wniosku o zasiłek pogrzebowy, gdy zakład odbiera zasiłek za rodzinę.">
+                <Input id="regon" name="regon" inputMode="numeric" defaultValue={home.regon ?? ""} maxLength={17} aria-describedby="regon-hint" />
+              </Field>
+              <Field label="Rachunek zakładu do wypłaty zasiłku" id="bank_account" hint="26 cyfr. Trafia do wniosku Z-12, gdy rodzina upoważni zakład do odbioru zasiłku.">
+                <Input id="bank_account" name="bank_account" inputMode="numeric" defaultValue={home.bank_account ? formatBankAccount(home.bank_account) : ""} aria-describedby="bank_account-hint" />
+              </Field>
             </fieldset>
             <p className="text-[13px] text-muted">NIP {home.nip}. Nazwę i NIP zmienia Ostoja po weryfikacji dokumentów.</p>
             {canEdit ? <SubmitButton>Zapisz profil</SubmitButton> : <p className="text-muted">Profil edytuje właściciel lub biuro.</p>}
@@ -177,6 +190,66 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
           </Card>
         </div>
       </div>
+
+
+      <Card className="mt-4">
+        <CardTitle aside={invoicing ? `połączono · klucz ${invoicing.secret_hint}` : undefined}>Program do faktur</CardTitle>
+        <p className="mb-3 text-[15px] text-muted">
+          Po oznaczeniu umowy jako podpisanej Ostoja wystawia fakturę w Waszym programie. Do KSeF wysyła ją sam program – według jego ustawień.
+          Faktury dla osób prywatnych nie muszą trafiać do KSeF.
+        </p>
+        {me.role !== "wlasciciel" ? (
+          <p className="text-[15px]">{invoicing ? `Połączony program: Fakturownia (${invoicing.account}).` : "Program do faktur łączy właściciel zakładu."}</p>
+        ) : !integrationsEnabled() ? (
+          <p className="text-[15px] text-warn-ink">Połączenia z programami do faktur są chwilowo wyłączone.</p>
+        ) : (
+          <>
+            <form action={saveInvoicing} className="grid gap-3 sm:grid-cols-2">
+              <Field id="inv-provider" label="Program">
+                <Select id="inv-provider" name="provider" defaultValue="fakturownia">
+                  <option value="fakturownia">Fakturownia</option>
+                  <option value="infakt" disabled>inFakt – wkrótce</option>
+                  <option value="wfirma" disabled>wFirma – wkrótce</option>
+                  <option value="ifirma" disabled>iFirma – wkrótce</option>
+                </Select>
+              </Field>
+              <Field id="inv-account" label="Nazwa konta" hint="Z adresu konta, np. dom-cisza z dom-cisza.fakturownia.pl">
+                <Input id="inv-account" name="account" defaultValue={invoicing?.account ?? ""} required autoComplete="off" aria-describedby="inv-account-hint" />
+              </Field>
+              <Field
+                id="inv-token"
+                label={invoicing ? "Nowy kod autoryzacyjny API (zostaw puste, żeby nie zmieniać)" : "Kod autoryzacyjny API"}
+                hint="Fakturownia: Ustawienia → Ustawienia konta → Integracja. Zapisujemy go zaszyfrowany i nigdy nie pokazujemy."
+              >
+                <Input id="inv-token" name="api_token" type="password" autoComplete="off" required={!invoicing} aria-describedby="inv-token-hint" />
+              </Field>
+              <Field id="inv-vat" label="Stawka VAT na usługi pogrzebowe">
+                <Select id="inv-vat" name="vat_rate" defaultValue={invoicing?.vat_rate ?? "8"}>
+                  <option value="8">8%</option>
+                  <option value="23">23%</option>
+                  <option value="zw">zwolnione (zw)</option>
+                </Select>
+              </Field>
+              <label className="flex min-h-11 items-center gap-3">
+                <input type="checkbox" name="auto_issue" value="tak" defaultChecked={invoicing?.auto_issue ?? true} className="size-5 accent-brand" />
+                Wystawiaj fakturę od razu po podpisaniu umowy
+              </label>
+              <label className="flex min-h-11 items-center gap-3">
+                <input type="checkbox" name="ksef_b2c" value="tak" defaultChecked={invoicing?.ksef_b2c ?? false} className="size-5 accent-brand" />
+                Wysyłaj do KSeF także faktury dla osób prywatnych
+              </label>
+              <div className="sm:col-span-2">
+                <SubmitButton>{invoicing ? "Zapisz ustawienia" : "Połącz Fakturownię"}</SubmitButton>
+              </div>
+            </form>
+            {invoicing ? (
+              <form action={disconnectInvoicing} className="mt-3 border-t border-line-soft pt-3">
+                <SubmitButton variant="danger" pendingLabel="Odłączam…">Odłącz program i usuń klucz</SubmitButton>
+              </form>
+            ) : null}
+          </>
+        )}
+      </Card>
 
       <Card className="mt-4">
         <CardTitle aside={home.rating ? `średnio ${String(home.rating).replace(".", ",")} z 5` : undefined}>Oceny od rodzin</CardTitle>

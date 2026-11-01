@@ -12,6 +12,7 @@ const sql = postgres(process.env.MOCK_DATABASE_URL ?? "postgresql://postgres@127
 const passwords = new Map([["00000000-0000-4000-8000-000000000001", "anna-haslo-testowe"]]);
 const recovery = new Map(); // token → id konta
 const outbox = [];
+const fakturowniaInvoices = [];
 
 const userByEmail = async (email) => (await sql`select id from auth.users where lower(email) = lower(${email ?? ""})`)[0]?.id ?? null;
 
@@ -39,6 +40,24 @@ createServer((req, res) => {
       outbox.push({ to: data.to[0].email, subject: data.subject, html: data.htmlContent, text: data.textContent, tags: data.tags });
       return send(201, { messageId: `<${randomBytes(6).toString("hex")}@mock>` });
     }
+
+    // --- Fakturownia (FAKTUROWNIA_BASE_URL=http://127.0.0.1:54399/fakturownia) ---
+    const fk = url.pathname.match(/^\/fakturownia\/([a-z0-9-]+)\/invoices(?:\/(\d+))?\.json$/);
+    if (fk) {
+      const token = data.api_token ?? url.searchParams.get("api_token");
+      if (token !== "fakturownia-test-token") return send(401, { code: "error", message: "Nieprawidłowy token" });
+      if (req.method === "POST") {
+        const inv = data.invoice ?? {};
+        if (!inv.buyer_first_name || !inv.buyer_last_name || !inv.buyer_post_code || !inv.positions?.length) {
+          return send(422, { code: "error", message: { buyer_post_code: ["nie może być puste"] } });
+        }
+        const id = 1000 + fakturowniaInvoices.length + 1;
+        fakturowniaInvoices.push({ id, account: fk[1], body: data });
+        return send(201, { id, number: `FV ${fakturowniaInvoices.length}/11/2026`, token: `tok${id}`, gov_status: data.gov_save_and_send ? "processing" : null });
+      }
+      return send(200, { gov_status: "ok", gov_id: "5252445767-20261101-ABC123DEF456" });
+    }
+    if (url.pathname === "/mock/fakturownia") return send(200, fakturowniaInvoices.at(-1) ?? {});
 
     // --- Supabase Auth ---
     const key = req.headers.apikey;

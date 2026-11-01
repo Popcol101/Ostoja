@@ -24,7 +24,7 @@ import {
   type OrderStage,
 } from "@/lib/labels";
 import { requireMember } from "@/lib/session";
-import { assignOrderItem, publishMemorial, removeOrderItem, sendFamilySms, setEventStatus, setStage, signContract, toggleTask, updateOrderDetails } from "../../actions";
+import { assignOrderItem, manualInvoice, publishMemorial, removeOrderItem, requestInvoice, sendFamilySms, updatePayerAddress, setEventStatus, setStage, signContract, toggleTask, updateOrderDetails } from "../../actions";
 import { EventForm, type Resource } from "../../event-form";
 
 export const metadata: Metadata = { title: "Karta zlecenia" };
@@ -42,6 +42,9 @@ type Order = {
   principal_name: string;
   principal_phone: string;
   principal_email: string | null;
+  principal_street: string | null;
+  principal_post_code: string | null;
+  principal_city: string | null;
   zus_bank_account: string | null;
   total_pln: number | null;
   notes: string | null;
@@ -68,6 +71,27 @@ type Ev = {
   place: string | null;
   resource_names: string[];
   warning: string | null;
+};
+
+type InvoiceRow = {
+  status: "do_wystawienia" | "wystawiona" | "blad" | "reczna";
+  provider: string | null;
+  number: string | null;
+  issued_on: string | null;
+  gross_pln: number | null;
+  ksef_number: string | null;
+  ksef_status: string | null;
+  view_url: string | null;
+  attempts: number;
+  last_error: string | null;
+};
+
+const KSEF_LABEL: Record<string, string> = {
+  processing: "wysłana do KSeF, czeka na numer",
+  ok: "w KSeF",
+  send_error: "błąd wysyłki do KSeF – sprawdź w programie do faktur",
+  offline: "tryb offline – program wyśle do KSeF później",
+  offline_error: "błąd trybu offline – sprawdź w programie do faktur",
 };
 
 type OrderStock = { stock_item_id: string; name: string; kind: string; qty: number; unit_price_pln: number };
@@ -118,10 +142,13 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
       where home_id = ${order.home_id} and active and qty > 0
         and id not in (select stock_item_id from order_items where order_id = ${id})
       order by kind, name`;
-    return { order, items, tasks, events, resources, sms, orderStock, stockOptions };
+    const [invoice] = await tx<InvoiceRow[]>`
+      select status, provider, number, issued_on, gross_pln, ksef_number, ksef_status, view_url, attempts, last_error
+      from invoices where order_id = ${id}`;
+    return { order, items, tasks, events, resources, sms, orderStock, stockOptions, invoice: invoice ?? null };
   });
   if (!data) notFound();
-  const { order: o, items, tasks, events, resources, sms, orderStock, stockOptions } = data;
+  const { order: o, items, tasks, events, resources, sms, orderStock, stockOptions, invoice } = data;
   const canEditStock = me.role !== "ekipa";
 
   const h = await headers();
@@ -186,6 +213,26 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
                 <Phone size={18} aria-hidden="true" /> Zadzwoń
               </LinkButton>
             </div>
+            <details className="mt-3 border-t border-line-soft pt-2" open={!o.principal_city && Boolean(o.contract_signed_at)}>
+              <summary className="inline-flex min-h-11 cursor-pointer items-center font-semibold text-brand">
+                {o.principal_city ? `Adres: ${o.principal_street ?? ""}, ${o.principal_post_code ?? ""} ${o.principal_city}` : "Adres do faktury i wniosku o zasiłek"}
+              </summary>
+              <form action={updatePayerAddress} className="mt-1 grid gap-3 sm:grid-cols-[minmax(0,2fr)_7rem_minmax(0,1fr)] sm:items-end">
+                <input type="hidden" name="orderId" value={o.id} />
+                <Field id="payer-street" label="Ulica i numer">
+                  <Input id="payer-street" name="principal_street" defaultValue={o.principal_street ?? ""} maxLength={120} autoComplete="off" />
+                </Field>
+                <Field id="payer-post" label="Kod">
+                  <Input id="payer-post" name="principal_post_code" defaultValue={o.principal_post_code ?? ""} placeholder="00-000" maxLength={6} autoComplete="off" />
+                </Field>
+                <Field id="payer-city" label="Miejscowość">
+                  <Input id="payer-city" name="principal_city" defaultValue={o.principal_city ?? ""} maxLength={80} autoComplete="off" />
+                </Field>
+                <div className="sm:col-span-3">
+                  <SubmitButton variant="secondary">Zapisz adres</SubmitButton>
+                </div>
+              </form>
+            </details>
           </Card>
 
           <Card>
@@ -333,6 +380,79 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
                 <SubmitButton>Umowa podpisana</SubmitButton>
               </form>
             )}
+          </Card>
+
+          <Card>
+            <CardTitle aside={invoice?.number ? invoice.number : undefined}>Faktura</CardTitle>
+            {!invoice ? (
+              !o.contract_signed_at ? (
+                <p className="text-[15px] text-muted">Faktura powstanie po oznaczeniu umowy jako podpisanej – w programie do faktur połączonym w profilu zakładu.</p>
+              ) : (
+                <form action={requestInvoice}>
+                  <input type="hidden" name="orderId" value={o.id} />
+                  <SubmitButton pendingLabel="Wystawiam…">Wystaw fakturę w programie</SubmitButton>
+                </form>
+              )
+            ) : invoice.status === "do_wystawienia" ? (
+              <p className="text-[15px]">
+                <Badge tone="warn">W drodze</Badge> <span className="ml-1">Wystawiamy fakturę w programie do faktur.</span>
+                {invoice.last_error ? <span className="mt-1 block text-[14px] text-warn-ink">{invoice.last_error}</span> : null}
+              </p>
+            ) : invoice.status === "blad" ? (
+              <div className="flex flex-col gap-2 text-[15px]">
+                <p>
+                  <Badge tone="danger">Nie wystawiono</Badge> <span className="ml-1">{invoice.last_error}</span>
+                </p>
+                <form action={requestInvoice}>
+                  <input type="hidden" name="orderId" value={o.id} />
+                  <SubmitButton variant="secondary" pendingLabel="Wystawiam…">Wystaw ponownie</SubmitButton>
+                </form>
+              </div>
+            ) : (
+              <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-[15px]">
+                <dt className="text-muted">Numer</dt>
+                <dd className="font-semibold">{invoice.number ?? "nadaje program"}</dd>
+                <dt className="text-muted">Wystawiona</dt>
+                <dd>{invoice.issued_on ? formatPlainDate(invoice.issued_on) : "–"}</dd>
+                <dt className="text-muted">Kwota brutto</dt>
+                <dd>{formatPln(invoice.gross_pln)}</dd>
+                <dt className="text-muted">KSeF</dt>
+                <dd>
+                  {invoice.ksef_number ? <span className="block break-all font-mono text-[13px]">{invoice.ksef_number}</span> : null}
+                  {invoice.ksef_status ? KSEF_LABEL[invoice.ksef_status] : invoice.ksef_number ? "w KSeF" : "poza KSeF (faktura dla osoby prywatnej)"}
+                </dd>
+              </dl>
+            )}
+            {invoice?.view_url ? (
+              <a href={invoice.view_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex min-h-11 items-center font-semibold text-brand">
+                Podgląd faktury w programie
+              </a>
+            ) : null}
+            {o.contract_signed_at && me.role !== "ekipa" && (!invoice || invoice.status === "blad" || invoice.status === "reczna") ? (
+              <details className="mt-2 border-t border-line-soft pt-2">
+                <summary className="inline-flex min-h-11 cursor-pointer items-center font-semibold text-brand">
+                  {invoice?.status === "reczna" ? "Popraw dane faktury" : "Faktura z innego programu – wpisz dane"}
+                </summary>
+                <form action={manualInvoice} className="mt-1 grid gap-3 sm:grid-cols-2">
+                  <input type="hidden" name="orderId" value={o.id} />
+                  <Field id="mi-number" label="Numer faktury">
+                    <Input id="mi-number" name="number" defaultValue={invoice?.number ?? ""} maxLength={60} required />
+                  </Field>
+                  <Field id="mi-date" label="Data wystawienia">
+                    <Input id="mi-date" name="issued_on" type="date" defaultValue={invoice?.issued_on ?? ""} required />
+                  </Field>
+                  <Field id="mi-gross" label="Kwota brutto (zł)">
+                    <Input id="mi-gross" name="gross_pln" inputMode="decimal" defaultValue={invoice?.gross_pln ?? o.total_pln ?? ""} required />
+                  </Field>
+                  <Field id="mi-ksef" label="Numer KSeF (jeśli jest)">
+                    <Input id="mi-ksef" name="ksef_number" defaultValue={invoice?.ksef_number ?? ""} maxLength={60} autoComplete="off" />
+                  </Field>
+                  <div className="sm:col-span-2">
+                    <SubmitButton variant="secondary">Zapisz fakturę</SubmitButton>
+                  </div>
+                </form>
+              </details>
+            ) : null}
           </Card>
 
           <Card>

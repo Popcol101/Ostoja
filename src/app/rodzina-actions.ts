@@ -167,6 +167,9 @@ const familySchema = z.object({
   died_date: z.union([z.literal(""), z.iso.date()]),
   died_time: z.union([z.literal(""), z.string().regex(/^\d{2}:\d{2}$/)]),
   principal_email: z.union([z.literal(""), z.email({ message: "Podaj poprawny e-mail" })]),
+  principal_street: z.string().trim().max(120).optional().default(""),
+  principal_post_code: z.union([z.literal(""), z.string().trim().regex(/^\d{2}-\d{3}$/, { message: "Kod pocztowy ma postać 00-000" })]).optional().default(""),
+  principal_city: z.string().trim().max(80).optional().default(""),
   zus_bank_account: z
     .string()
     .transform((v) => v.replace(/\D/g, ""))
@@ -187,6 +190,9 @@ export async function familyUpdate(formData: FormData) {
     born_on: d.born_on,
     died_at: d.died_date ? warsawToUtc(d.died_date, d.died_time || "12:00").toISOString() : "",
     principal_email: d.principal_email,
+    principal_street: d.principal_street,
+    principal_post_code: d.principal_post_code,
+    principal_city: d.principal_city,
     zus_bank_account: d.zus_bank_account,
     family_consents: {
       dane_do_dokumentow: formData.get("zgoda_dane") === "tak",

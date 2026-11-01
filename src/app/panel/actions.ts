@@ -9,6 +9,8 @@ import { slugify, warsawToUtc } from "@/lib/format";
 import { withMessage } from "@/lib/messages";
 import { processOutbox } from "@/lib/notify";
 import { destroySession, requireMember } from "@/lib/session";
+import { encryptSecret, integrationsEnabled } from "@/lib/crypto";
+import { processInvoices } from "@/lib/invoicing/process";
 import { STOCK_TEMPLATE, stockEditSchema, stockItemSchema, stockMoveSchema } from "@/lib/stock";
 
 const uuid = z.guid({ message: "Nieprawidłowy identyfikator" });
@@ -117,6 +119,7 @@ export async function signContract(formData: FormData) {
     withUser(me.userId, (tx) => tx`update orders set contract_signed_at = now() where id = ${orderId} and contract_signed_at is null`),
   );
   if (!res.ok) back(`/panel/zlecenia/${orderId}`, res.message);
+  if (integrationsEnabled()) after(() => processInvoices()); // faktura w programie zakładu od razu, harmonogram łapie resztę
   revalidatePath(`/panel/zlecenia/${orderId}`);
   back(`/panel/zlecenia/${orderId}`, "Umowa oznaczona jako podpisana.", "ok");
 }
@@ -230,6 +233,18 @@ const profileSchema = z.object({
   description: optionalText(600),
   service_radius_km: z.coerce.number().int().min(1).max(200),
   has_farewell_hall: z.literal("tak").optional(),
+  regon: z
+    .string()
+    .optional()
+    .default("")
+    .transform((v) => v.replace(/\D/g, ""))
+    .pipe(z.union([z.literal(""), z.string().regex(/^(\d{9}|\d{14})$/, { message: "REGON ma 9 albo 14 cyfr" })])),
+  bank_account: z
+    .string()
+    .optional()
+    .default("")
+    .transform((v) => v.replace(/\D/g, ""))
+    .pipe(z.union([z.literal(""), z.string().length(26, { message: "Numer konta ma 26 cyfr" })])),
 });
 
 export async function updateProfile(formData: FormData) {
@@ -241,7 +256,8 @@ export async function updateProfile(formData: FormData) {
   await withUser(me.userId, (tx) => tx`
     update funeral_homes set phone = ${p.phone}, email = ${p.email}, address = ${p.address},
       description = ${p.description}, service_radius_km = ${p.service_radius_km},
-      has_farewell_hall = ${p.has_farewell_hall === "tak"}
+      has_farewell_hall = ${p.has_farewell_hall === "tak"},
+      regon = ${p.regon || null}, bank_account = ${p.bank_account || null}
     where id = ${me.homeId}`);
   revalidatePath("/panel/profil");
   back("/panel/profil", "Zapisano profil.", "ok");
@@ -497,4 +513,138 @@ export async function removeOrderItem(formData: FormData) {
   await withUser(me.userId, (tx) => tx`delete from order_items where order_id = ${orderId} and stock_item_id = ${itemId}`);
   revalidatePath(path);
   back(path, "Produkt wrócił na stan magazynu.", "ok");
+}
+
+// --- Faktury -----------------------------------------------------------------------------------
+
+const PROFILE = "/panel/profil";
+
+const invoicingSchema = z.object({
+  provider: z.literal("fakturownia", { message: "Wybierz program do faktur." }),
+  account: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .transform((v) => v.replace(/^https?:\/\//, "").replace(/\.fakturownia\.pl.*$/, ""))
+    .pipe(z.string().regex(/^[a-z0-9][a-z0-9-]{1,62}$/, { message: "Podaj nazwę konta z adresu, np. dom-cisza z dom-cisza.fakturownia.pl." })),
+  api_token: z.string().trim().max(200).optional().default(""),
+  vat_rate: z.enum(["8", "23", "zw"]),
+  auto_issue: z.literal("tak").optional(),
+  ksef_b2c: z.literal("tak").optional(),
+});
+
+export async function saveInvoicing(formData: FormData) {
+  const me = await requireMember();
+  if (me.role !== "wlasciciel") back(PROFILE, "Program do faktur łączy właściciel zakładu.");
+  if (!integrationsEnabled()) back(PROFILE, "Połączenia z programami do faktur są chwilowo wyłączone.");
+  const parsed = invoicingSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) back(PROFILE, parsed.error.issues[0]?.message ?? "Sprawdź wpisane dane.");
+  const p = parsed.data;
+  if (p.api_token && (p.api_token.length < 10 || /\s/.test(p.api_token))) back(PROFILE, "Wklej cały kod autoryzacyjny API z Fakturowni.");
+  const res = await attempt(() =>
+    withUser(me.userId, async (tx) => {
+      const [existing] = await tx<{ provider: string }[]>`select provider from invoicing_connections where home_id = ${me.homeId}`;
+      if (!existing && !p.api_token) return "brak-klucza";
+      if (p.api_token) {
+        const enc = encryptSecret(p.api_token, me.homeId);
+        const hint = `…${p.api_token.slice(-4)}`;
+        // Bez upsertu: INSERT … ON CONFLICT wymagałby odczytu kolumny z kluczem, a tej rola authenticated nie ma.
+        if (existing) {
+          await tx`
+            update invoicing_connections set provider = ${p.provider}, account = ${p.account}, secret_enc = ${enc}, secret_hint = ${hint},
+              vat_rate = ${p.vat_rate}, auto_issue = ${p.auto_issue === "tak"}, ksef_b2c = ${p.ksef_b2c === "tak"},
+              updated_by = ${me.userId}, updated_at = now()
+            where home_id = ${me.homeId}`;
+        } else {
+          await tx`
+            insert into invoicing_connections (home_id, provider, account, secret_enc, secret_hint, vat_rate, auto_issue, ksef_b2c, updated_by)
+            values (${me.homeId}, ${p.provider}, ${p.account}, ${enc}, ${hint}, ${p.vat_rate}, ${p.auto_issue === "tak"}, ${p.ksef_b2c === "tak"}, ${me.userId})`;
+        }
+      } else {
+        await tx`
+          update invoicing_connections set provider = ${p.provider}, account = ${p.account}, vat_rate = ${p.vat_rate},
+            auto_issue = ${p.auto_issue === "tak"}, ksef_b2c = ${p.ksef_b2c === "tak"}, updated_by = ${me.userId}, updated_at = now()
+          where home_id = ${me.homeId}`;
+      }
+      return "ok";
+    }),
+  );
+  if (!res.ok) back(PROFILE, res.message);
+  if (res.value === "brak-klucza") back(PROFILE, "Wklej cały kod autoryzacyjny API z Fakturowni.");
+  revalidatePath(PROFILE);
+  back(PROFILE, "Program do faktur połączony. Faktura powstanie po oznaczeniu umowy jako podpisanej.", "ok");
+}
+
+export async function disconnectInvoicing() {
+  const me = await requireMember();
+  if (me.role !== "wlasciciel") back(PROFILE, "Program do faktur łączy właściciel zakładu.");
+  await withUser(me.userId, (tx) => tx`delete from invoicing_connections where home_id = ${me.homeId}`);
+  revalidatePath(PROFILE);
+  back(PROFILE, "Program do faktur odłączony. Klucz API usunięty z Ostoi.", "ok");
+}
+
+export async function requestInvoice(formData: FormData) {
+  const me = await requireMember();
+  const orderId = uuid.parse(formData.get("orderId"));
+  const path = `/panel/zlecenia/${orderId}`;
+  if (me.role === "ekipa") back(path, "Fakturę wystawia właściciel albo biuro zakładu");
+  const res = await attempt(() => withUser(me.userId, (tx) => tx`select request_invoice(${orderId})`));
+  if (!res.ok) back(path, res.message);
+  if (integrationsEnabled()) await processInvoices(5);
+  revalidatePath(path);
+  back(path, "Wysłano fakturę do wystawienia w programie zakładu.", "ok");
+}
+
+const manualInvoiceSchema = z.object({
+  orderId: uuid,
+  number: z.string().trim().min(1, { message: "Podaj numer faktury." }).max(60),
+  issued_on: z.iso.date({ message: "Podaj datę wystawienia." }),
+  gross_pln: z
+    .string()
+    .transform((v) => Number(v.replace(/\s/g, "").replace(",", ".")))
+    .pipe(z.number().min(0, { message: "Kwota musi być liczbą." }).max(1000000, { message: "Kwota musi być liczbą." })),
+  ksef_number: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .optional()
+    .default("")
+    .pipe(z.union([z.literal(""), z.string().regex(/^\d{10}-\d{8}-[0-9A-Z]{6,40}$/, { message: "Numer KSeF ma postać NIP-RRRRMMDD-…, np. 5252445767-20261020-ABC123DEF456." })])),
+});
+
+export async function manualInvoice(formData: FormData) {
+  const me = await requireMember();
+  const parsed = manualInvoiceSchema.safeParse(Object.fromEntries(formData));
+  const orderId = String(formData.get("orderId") ?? "");
+  const path = `/panel/zlecenia/${orderId}`;
+  if (!parsed.success) back(path, parsed.error.issues[0]?.message ?? "Sprawdź wpisane dane.");
+  if (me.role === "ekipa") back(path, "Fakturę wystawia właściciel albo biuro zakładu");
+  const p = parsed.data;
+  const res = await attempt(() =>
+    withUser(me.userId, (tx) => tx`select record_manual_invoice(${p.orderId}, ${p.number}, ${p.issued_on}, ${p.gross_pln}, ${p.ksef_number})`),
+  );
+  if (!res.ok) back(path, res.message);
+  revalidatePath(path);
+  back(path, "Zapisano dane faktury.", "ok");
+}
+
+const payerSchema = z.object({
+  orderId: uuid,
+  principal_street: z.string().trim().max(120),
+  principal_post_code: z.union([z.literal(""), z.string().trim().regex(/^\d{2}-\d{3}$/, { message: "Kod pocztowy ma postać 00-000" })]),
+  principal_city: z.string().trim().max(80),
+});
+
+export async function updatePayerAddress(formData: FormData) {
+  const me = await requireMember();
+  const parsed = payerSchema.safeParse(Object.fromEntries(formData));
+  const path = `/panel/zlecenia/${String(formData.get("orderId") ?? "")}`;
+  if (!parsed.success) back(path, parsed.error.issues[0]?.message ?? "Sprawdź wpisane dane.");
+  const p = parsed.data;
+  await withUser(me.userId, (tx) => tx`
+    update orders set principal_street = ${p.principal_street || null}, principal_post_code = ${p.principal_post_code || null},
+      principal_city = ${p.principal_city || null}
+    where id = ${p.orderId}`);
+  revalidatePath(path);
+  back(path, "Zapisano dane.", "ok");
 }
