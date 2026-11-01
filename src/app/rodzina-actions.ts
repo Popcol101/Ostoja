@@ -206,3 +206,31 @@ export async function familyUpdate(formData: FormData) {
   if (error) redirect(withMessage(`/r/${d.token}`, "blad", error), RedirectType.replace);
   redirect(withMessage(`/r/${d.token}`, "ok", "Dziękujemy. Zakład widzi już te informacje."), RedirectType.replace);
 }
+
+const reviewSchema = z.object({
+  token: z.string().regex(/^[a-z0-9-]{20,80}$/),
+  ocena: z.coerce.number({ message: "Wybierz ocenę od 1 do 5." }).int().min(1, { message: "Wybierz ocenę od 1 do 5." }).max(5, { message: "Wybierz ocenę od 1 do 5." }),
+  komentarz: z.string().trim().max(1000, { message: "Komentarz może mieć najwyżej 1000 znaków." }).optional().default(""),
+});
+
+/** Ocena zakładu z linku dla rodziny (bez konta). Baza sprawdza, czy pogrzeb już się odbył. */
+export async function familyReview(formData: FormData) {
+  const raw = Object.fromEntries(formData);
+  const token = String(raw.token ?? "");
+  const back = `/r/${encodeURIComponent(token)}#ocena`;
+  const parsed = reviewSchema.safeParse(raw);
+  if (!parsed.success) redirect(withMessage(back, "blad", parsed.error.issues[0]?.message ?? "Sprawdź wpisane dane."), RedirectType.replace);
+  if (!(await rateLimit("ocena", 20, 60 * 60 * 1000))) redirect(withMessage(back, "blad", "Zbyt wiele prób. Spróbuj za chwilę."), RedirectType.replace);
+
+  const d = parsed.data;
+  let error: string | null = null;
+  try {
+    await asAnon((tx) => tx`select family_submit_review(${d.token}, ${d.ocena}, ${d.komentarz})`);
+  } catch (e) {
+    error = userFacingDbError(e);
+    if (!error) throw e;
+  }
+  revalidatePath(`/r/${d.token}`);
+  if (error) redirect(withMessage(back, "blad", error), RedirectType.replace);
+  redirect(withMessage(back, "ok", "Dziękujemy za ocenę. Pomoże innym rodzinom wybrać zakład."), RedirectType.replace);
+}

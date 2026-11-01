@@ -33,7 +33,7 @@ export default function TermsPage() {
       <h2>Ceny i oceny</h2>
       <p>
         Ceny podają zakłady za ten sam standardowy zakres usług, dlatego da się je porównać. Ostateczną cenę ustalasz z zakładem w umowie.
-        Oceny pochodzą od [źródło ocen i sposób ich weryfikacji – DO UZUPEŁNIENIA przed publikacją ocen].
+        Oceny wystawiają wyłącznie rodziny, które zorganizowały pogrzeb w danym zakładzie przez Ostoję. Ocenę można dodać tylko z osobistego linku do zlecenia, po ceremonii lub pochówku – jedną na pogrzeb. Średnia liczy wszystkie takie oceny; Ostoja ukrywa tylko oceny łamiące regulamin (np. z danymi osobowymi albo obraźliwe), nigdy z powodu niskiej oceny.
       </p>
 
       <h2>Zapytanie i kod SMS</h2>

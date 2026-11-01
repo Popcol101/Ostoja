@@ -158,3 +158,14 @@ export async function markHandled(formData: FormData) {
   revalidatePath(PATH);
   back(PATH, "ok", "Zapytanie oznaczone jako obsłużone.");
 }
+
+export async function setReviewHidden(formData: FormData) {
+  const admin = await requireAdmin();
+  const PATH = "/admin/oceny";
+  const orderId = z.guid().parse(formData.get("orderId"));
+  const hide = formData.get("hide") === "tak";
+  const reason = z.string().trim().max(300).parse(String(formData.get("reason") ?? ""));
+  await attempt(PATH, () => withUser(admin.userId, (tx) => tx`select admin_set_review_hidden(${orderId}, ${hide}, ${reason})`));
+  revalidatePath(PATH);
+  back(PATH, "ok", hide ? "Ocena ukryta. Nie liczy się do średniej zakładu." : "Ocena przywrócona.");
+}

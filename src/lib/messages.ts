@@ -130,6 +130,15 @@ export const MESSAGES = {
   "klepsydra-zgoda": "Potwierdź, że rodzina zgodziła się na publikację klepsydry",
   "klepsydra-dane": "Uzupełnij imię, nazwisko i datę zgonu przed publikacją",
   "klepsydra-adres": "Nie udało się przygotować adresu klepsydry",
+  // Oceny od rodzin
+  "ocena-zapisana": "Dziękujemy za ocenę. Pomoże innym rodzinom wybrać zakład.",
+  "ocena-po-pogrzebie": "Ocenę można wystawić po ceremonii lub pochówku.",
+  "wybierz-ocene": "Wybierz ocenę od 1 do 5.",
+  "komentarz-dlugi": "Komentarz może mieć najwyżej 1000 znaków.",
+  "ocena-powod": "Podaj powód ukrycia oceny.",
+  "brak-oceny": "Nie ma takiej oceny.",
+  "ocena-ukryta": "Ocena ukryta. Nie liczy się do średniej zakładu.",
+  "ocena-przywrocona": "Ocena przywrócona.",
   "blad-zapisu": "Nie udało się zapisać. Spróbuj ponownie albo zadzwoń do opiekuna Ostoi.",
 } as const;
 
@@ -154,5 +163,5 @@ export function withMessage(path: string, kind: "ok" | "blad", text: string): st
   url.searchParams.delete("ok");
   url.searchParams.delete("blad");
   url.searchParams.set(kind, messageCode(text));
-  return `${url.pathname}${url.search}`;
+  return `${url.pathname}${url.search}${url.hash}`;
 }

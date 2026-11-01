@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { SubmitButton } from "@/components/client";
 import { ShareButtons } from "@/components/share";
+import { ReviewCard, type FamilyReview } from "@/components/review-form";
 import { Flash, type SearchParams } from "@/components/flash";
 import { OPIEKUN_PHONE, SiteFooter, SiteHeader } from "@/components/site";
 import { Badge, Card, CardTitle, EmptyState, Field, Input, LinkButton, cx } from "@/components/ui";
@@ -56,12 +57,13 @@ function warsawParts(iso: string | null): { date: string; time: string } {
 export default async function FamilyOrderPage({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: SearchParams }) {
   const { token } = await params;
   const valid = /^[a-z0-9-]{20,80}$/.test(token);
-  const order = valid
+  const { order, review } = valid
     ? await asAnon(async (tx) => {
-        const [row] = await tx<{ data: FamilyOrder | null }[]>`select family_get_order(${token}) as data`;
-        return row?.data ?? null;
+        const [row] = await tx<{ data: FamilyOrder | null; review: FamilyReview | null }[]>`
+          select family_get_order(${token}) as data, family_review(${token}) as review`;
+        return { order: row?.data ?? null, review: row?.review ?? null };
       })
-    : null;
+    : { order: null, review: null };
   const tel = OPIEKUN_PHONE.replace(/\s/g, "");
   const obituary = order?.obituary_slug ? await loadPublicObituary(order.obituary_slug) : null;
   const obituaryText = obituary ? shareText(buildObituary(obituary.input)) : "";
@@ -172,6 +174,8 @@ export default async function FamilyOrderPage({ params, searchParams }: { params
               />
             </Card>
           ) : null}
+
+          {review ? <ReviewCard token={token} review={review} /> : null}
 
           <Card>
             <CardTitle>Koszt</CardTitle>

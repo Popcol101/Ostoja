@@ -77,7 +77,8 @@ begin
   perform admin_mark_handled((select id from admin_escalations() limit 1), 'Oddzwoniono, rodzina wybrała zakład');
   assert (select handled_at from admin_escalations() limit 1) is not null, 'nie oznaczono jako obsłużone';
 
-  assert (select count(*) from admin_billing(current_date)) >= 1, 'brak rozliczeń w bieżącym miesiącu';
+  -- Miesiąc umowy z seeda (umowa sprzed 1 dnia) – nie zależy od tego, czy test biegnie 1. dnia miesiąca.
+  assert (select count(*) from admin_billing((now() - interval '1 day')::date)) >= 1, 'brak rozliczeń w miesiącu umowy';
 end $$;
 
 -- Dziennik zapisał działania.

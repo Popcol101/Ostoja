@@ -86,7 +86,7 @@ export default async function OfertyPage({ searchParams }: { searchParams: Searc
                 </Link>
               ))}
             </nav>
-            <p className="mt-2 text-sm text-muted">Kolejności nie da się kupić. Sortujesz tylko po odległości, cenie albo ocenach.</p>
+            <p className="mt-2 text-sm text-muted">Kolejności nie da się kupić. Sortujesz tylko po odległości, cenie albo ocenach. Oceny wystawiają wyłącznie rodziny, które zorganizowały pogrzeb przez Ostoję – z osobistego linku, po ceremonii.</p>
 
             <ul className="mt-5 flex flex-col gap-4">
               {homes.map((h) => {

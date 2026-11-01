@@ -26,13 +26,14 @@ type Home = {
   rating: number | null;
   reviews_count: number;
 };
+type ReviewRow = { order_id: string; rating: number; comment: string | null; updated_at: Date; hidden_at: Date | null; deceased: string | null };
 type PriceRow = { item_key: string; label: string; for_burial: string; optional: boolean; price_pln: number | null };
 
 const FOR_LABEL: Record<string, string> = { wszystkie: "każdy pogrzeb", tradycyjny: "pochówek tradycyjny", kremacja: "kremacja" };
 
 export default async function ProfilePage({ searchParams }: { searchParams: SearchParams }) {
   const me = await requireMember();
-  const { home, prices, quotes, devices } = await withUser(me.userId, async (tx) => {
+  const { home, prices, quotes, devices, reviews } = await withUser(me.userId, async (tx) => {
     const [home] = await tx<Home[]>`select * from funeral_homes where id = ${me.homeId}`;
     const prices = await tx<PriceRow[]>`
       select c.item_key, c.label, c.for_burial, c.optional, p.price_pln
@@ -44,7 +45,13 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
       union all select 'Kremacja bez ceremonii', quote_for(${me.homeId}, 'kremacja', 'bez')`;
     const devices = await tx<{ device: string | null; created_at: Date; last_used_at: Date | null }[]>`
       select device, created_at, last_used_at from push_subscriptions where user_id = ${me.userId} order by created_at`;
-    return { home, prices, quotes, devices };
+    const reviews = await tx<ReviewRow[]>`
+      select r.order_id, r.rating, r.comment, r.updated_at, r.hidden_at,
+             nullif(concat_ws(' ', o.deceased_first_name, o.deceased_last_name), '') as deceased
+      from home_reviews r join orders o on o.id = r.order_id
+      where r.home_id = ${me.homeId}
+      order by r.updated_at desc limit 50`;
+    return { home, prices, quotes, devices, reviews };
   });
   const canEdit = me.role !== "ekipa";
 
@@ -167,6 +174,32 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
           </Card>
         </div>
       </div>
+
+      <Card className="mt-4">
+        <CardTitle aside={home.rating ? `średnio ${String(home.rating).replace(".", ",")} z 5` : undefined}>Oceny od rodzin</CardTitle>
+        {reviews.length === 0 ? (
+          <p className="text-muted">
+            Jeszcze nie ma ocen. Rodzina może ocenić zakład ze swojego linku po ceremonii lub pochówku. Ocena trafia tutaj i do średniej w wynikach.
+          </p>
+        ) : (
+          <ul className="flex flex-col divide-y divide-line-soft">
+            {reviews.map((r) => (
+              <li key={r.order_id} className="flex flex-col gap-1 py-3">
+                <p className="flex flex-wrap items-baseline gap-x-3">
+                  <span className="font-semibold">Ocena {r.rating} z 5</span>
+                  <Link href={`/panel/zlecenia/${r.order_id}`} className="text-[15px] text-brand">
+                    {r.deceased ? `Pogrzeb: ${r.deceased}` : "Zlecenie"}
+                  </Link>
+                  <span className="text-[13px] text-muted">{formatDate(r.updated_at)}</span>
+                  {r.hidden_at ? <span className="text-[13px] text-warn-ink">Ukryta przez Ostoję – nie liczy się do średniej</span> : null}
+                </p>
+                {r.comment ? <p className="whitespace-pre-line text-[15px]">{r.comment}</p> : null}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-2 text-[13px] text-muted">Oceny wystawiają tylko rodziny, które zorganizowały u Was pogrzeb przez Ostoję. Komentarze widzicie tylko Wy i Ostoja.</p>
+      </Card>
     </>
   );
 }
