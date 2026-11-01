@@ -139,6 +139,21 @@ export const MESSAGES = {
   "brak-oceny": "Nie ma takiej oceny.",
   "ocena-ukryta": "Ocena ukryta. Nie liczy się do średniej zakładu.",
   "ocena-przywrocona": "Ocena przywrócona.",
+  // Magazyn
+  "magazyn-ekipa": "Magazyn zmienia właściciel albo biuro.",
+  "produkt-dodany": "Dodano produkt do magazynu.",
+  "asortyment-dodany": "Dodano podstawowy asortyment. Wpisz swoje ceny i stany.",
+  "produkt-zapisany": "Zapisano produkt.",
+  "dostawa-przyjeta": "Przyjęto dostawę.",
+  "stan-poprawiony": "Poprawiono stan.",
+  "korekta-powod": "Napisz krótko, dlaczego poprawiasz stan.",
+  "produkt-przypisany": "Produkt przypisany do zlecenia i zdjęty ze stanu.",
+  "produkt-zwrocony": "Produkt wrócił na stan magazynu.",
+  "brak-na-stanie": "Brak na stanie. Przyjmij dostawę albo popraw stan w magazynie.",
+  "produkt-wycofany": "Ten produkt jest wycofany z oferty.",
+  "podaj-nazwe-produktu": "Podaj nazwę produktu.",
+  "zla-cena": "Cena musi być liczbą od 0 do 100 000 zł.",
+  "podaj-sztuki": "Podaj liczbę sztuk.",
   "blad-zapisu": "Nie udało się zapisać. Spróbuj ponownie albo zadzwoń do opiekuna Ostoi.",
 } as const;
 

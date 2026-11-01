@@ -68,6 +68,9 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
         <Link href="/panel/rozliczenia" className="inline-flex min-h-11 items-center font-semibold text-brand">
           Rozliczenia z Ostoją
         </Link>
+        <Link href="/panel/magazyn" className="inline-flex min-h-11 items-center font-semibold text-brand">
+          Magazyn
+        </Link>
       </p>
 
       <Card className="mb-4">

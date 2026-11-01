@@ -9,6 +9,7 @@ import { slugify, warsawToUtc } from "@/lib/format";
 import { withMessage } from "@/lib/messages";
 import { processOutbox } from "@/lib/notify";
 import { destroySession, requireMember } from "@/lib/session";
+import { STOCK_TEMPLATE, stockEditSchema, stockItemSchema, stockMoveSchema } from "@/lib/stock";
 
 const uuid = z.guid({ message: "Nieprawidłowy identyfikator" });
 
@@ -404,4 +405,96 @@ export async function publishObituary(formData: FormData) {
   if (!result.ok) back(PATH, result.message);
   revalidatePath(PATH);
   back(PATH, publish ? "Klepsydra jest w sieci. Udostępnij link rodzinie i znajomym." : "Klepsydra wycofana z sieci.", "ok");
+}
+
+// --- Magazyn trumien i urn --------------------------------------------------------------------
+
+const STOCK = "/panel/magazyn";
+
+export async function addStockItem(formData: FormData) {
+  const me = await requireMember();
+  if (me.role === "ekipa") back(STOCK, "Magazyn zmienia właściciel albo biuro.");
+  const parsed = stockItemSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) back(STOCK, parsed.error.issues[0]?.message ?? "Sprawdź wpisane dane.");
+  const p = parsed.data;
+  await withUser(me.userId, (tx) => tx`
+    insert into stock_items (home_id, kind, name, material, supplier, sku, price_pln, qty, min_qty)
+    values (${me.homeId}, ${p.kind}, ${p.name}, ${p.material || null}, ${p.supplier || null}, ${p.sku || null},
+            ${p.price_pln}, ${p.qty}, ${p.min_qty})`);
+  revalidatePath(STOCK);
+  back(STOCK, "Dodano produkt do magazynu.", "ok");
+}
+
+export async function installStockTemplate() {
+  const me = await requireMember();
+  if (me.role === "ekipa") back(STOCK, "Magazyn zmienia właściciel albo biuro.");
+  const items = STOCK_TEMPLATE.map((t) => stockItemSchema.parse(t));
+  await withUser(me.userId, async (tx) => {
+    const [{ n }] = await tx<{ n: number }[]>`select count(*)::int as n from stock_items where home_id = ${me.homeId}`;
+    if (n > 0) return;
+    for (const p of items) {
+      await tx`insert into stock_items (home_id, kind, name, material, price_pln, qty, min_qty)
+               values (${me.homeId}, ${p.kind}, ${p.name}, ${p.material || null}, ${p.price_pln}, 0, ${p.min_qty})`;
+    }
+  });
+  revalidatePath(STOCK);
+  back(STOCK, "Dodano podstawowy asortyment. Wpisz swoje ceny i stany.", "ok");
+}
+
+export async function editStockItem(formData: FormData) {
+  const me = await requireMember();
+  if (me.role === "ekipa") back(STOCK, "Magazyn zmienia właściciel albo biuro.");
+  const parsed = stockEditSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) back(STOCK, parsed.error.issues[0]?.message ?? "Sprawdź wpisane dane.");
+  const p = parsed.data;
+  await withUser(me.userId, (tx) => tx`
+    update stock_items set name = ${p.name}, price_pln = ${p.price_pln}, min_qty = ${p.min_qty}, active = ${p.active === "tak"}
+    where id = ${p.itemId} and home_id = ${me.homeId}`);
+  revalidatePath(STOCK);
+  back(STOCK, "Zapisano produkt.", "ok");
+}
+
+export async function moveStock(formData: FormData) {
+  const me = await requireMember();
+  if (me.role === "ekipa") back(STOCK, "Magazyn zmienia właściciel albo biuro.");
+  const parsed = stockMoveSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) back(STOCK, parsed.error.issues[0]?.message ?? "Sprawdź wpisane dane.");
+  const p = parsed.data;
+  if (p.mode === "dostawa" && p.qty < 1) back(STOCK, "Podaj liczbę sztuk.");
+  if (p.mode === "korekta" && p.note.length < 3) back(STOCK, "Napisz krótko, dlaczego poprawiasz stan.");
+  await withUser(me.userId, async (tx) => {
+    await tx`select set_config('ostoja.stock_reason', ${p.mode}, true), set_config('ostoja.stock_note', ${p.note}, true)`;
+    if (p.mode === "dostawa") await tx`update stock_items set qty = qty + ${p.qty} where id = ${p.itemId} and home_id = ${me.homeId}`;
+    else await tx`update stock_items set qty = ${p.qty} where id = ${p.itemId} and home_id = ${me.homeId}`;
+  });
+  revalidatePath(STOCK);
+  back(STOCK, p.mode === "dostawa" ? "Przyjęto dostawę." : "Poprawiono stan.", "ok");
+}
+
+const orderItemSchema = z.object({ orderId: uuid, itemId: uuid, qty: z.coerce.number().int().min(1).max(50).default(1) });
+
+export async function assignOrderItem(formData: FormData) {
+  const me = await requireMember();
+  const parsed = orderItemSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) back(STOCK, "Sprawdź wpisane dane.");
+  const p = parsed.data;
+  const path = `/panel/zlecenia/${p.orderId}`;
+  if (me.role === "ekipa") back(path, "Magazyn zmienia właściciel albo biuro.");
+  const res = await attempt(() => withUser(me.userId, (tx) => tx`
+    insert into order_items (order_id, stock_item_id, home_id, qty, unit_price_pln)
+    values (${p.orderId}, ${p.itemId}, ${me.homeId}, ${p.qty}, 0)`));
+  if (!res.ok) back(path, res.message);
+  revalidatePath(path);
+  back(path, "Produkt przypisany do zlecenia i zdjęty ze stanu.", "ok");
+}
+
+export async function removeOrderItem(formData: FormData) {
+  const me = await requireMember();
+  const orderId = uuid.parse(formData.get("orderId"));
+  const itemId = uuid.parse(formData.get("itemId"));
+  const path = `/panel/zlecenia/${orderId}`;
+  if (me.role === "ekipa") back(path, "Magazyn zmienia właściciel albo biuro.");
+  await withUser(me.userId, (tx) => tx`delete from order_items where order_id = ${orderId} and stock_item_id = ${itemId}`);
+  revalidatePath(path);
+  back(path, "Produkt wrócił na stan magazynu.", "ok");
 }

@@ -223,3 +223,13 @@ end $$;
 insert into platform_admins (user_id, display_name) values
   ('00000000-0000-4000-8000-000000000009', 'Ola Maj')
 on conflict (user_id) do nothing;
+
+-- Magazyn Domu Pogrzebowego Cisza (dane testowe, ceny przykładowe).
+insert into stock_items (id, home_id, kind, name, material, supplier, price_pln, qty, min_qty) values
+  ('00000000-0000-4000-c100-000000000001', '00000000-0000-4000-a000-000000000001', 'trumna', 'Trumna sosnowa lakierowana', 'sosna', 'Dostawca testowy', 1500, 4, 2),
+  ('00000000-0000-4000-c100-000000000002', '00000000-0000-4000-a000-000000000001', 'trumna', 'Trumna dębowa', 'dąb', 'Dostawca testowy', 4200, 1, 1),
+  ('00000000-0000-4000-c100-000000000003', '00000000-0000-4000-a000-000000000001', 'trumna', 'Trumna do kremacji', 'sosna, bez metalowych okuć', 'Dostawca testowy', 900, 6, 3),
+  ('00000000-0000-4000-c100-000000000004', '00000000-0000-4000-a000-000000000001', 'urna', 'Urna ceramiczna', 'ceramika', 'Dostawca testowy', 450, 5, 2),
+  ('00000000-0000-4000-c100-000000000005', '00000000-0000-4000-a000-000000000001', 'urna', 'Urna metalowa', 'stal malowana proszkowo', 'Dostawca testowy', 700, 0, 1),
+  ('00000000-0000-4000-c100-000000000006', '00000000-0000-4000-a000-000000000001', 'urna', 'Urna biodegradowalna', 'papier i włókna roślinne', 'Dostawca testowy', 350, 3, 1)
+on conflict (id) do nothing;

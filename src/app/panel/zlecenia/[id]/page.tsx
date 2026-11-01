@@ -24,7 +24,7 @@ import {
   type OrderStage,
 } from "@/lib/labels";
 import { requireMember } from "@/lib/session";
-import { publishMemorial, sendFamilySms, setEventStatus, setStage, signContract, toggleTask, updateOrderDetails } from "../../actions";
+import { assignOrderItem, publishMemorial, removeOrderItem, sendFamilySms, setEventStatus, setStage, signContract, toggleTask, updateOrderDetails } from "../../actions";
 import { EventForm, type Resource } from "../../event-form";
 
 export const metadata: Metadata = { title: "Karta zlecenia" };
@@ -52,6 +52,7 @@ type Order = {
   memorial_published: boolean;
   memorial_note: string | null;
   offer_id: string | null;
+  home_id: string;
   family_consents: Record<string, boolean>;
 };
 
@@ -68,6 +69,9 @@ type Ev = {
   resource_names: string[];
   warning: string | null;
 };
+
+type OrderStock = { stock_item_id: string; name: string; kind: string; qty: number; unit_price_pln: number };
+type StockOption = { id: string; name: string; kind: string; qty: number; price_pln: number };
 
 type Sms = { status: "oczekuje" | "wyslano" | "blad" | "pominieto"; last_error: string | null; created_at: Date; sent_at: Date | null };
 
@@ -105,10 +109,20 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
     const sms = await tx<Sms[]>`
       select status, last_error, created_at, sent_at from notifications
       where order_id = ${id} and kind = 'link_dla_rodziny' order by created_at desc limit 3`;
-    return { order, items, tasks, events, resources, sms };
+    const orderStock = await tx<OrderStock[]>`
+      select oi.stock_item_id, s.name, s.kind, oi.qty, oi.unit_price_pln
+      from order_items oi join stock_items s on s.id = oi.stock_item_id
+      where oi.order_id = ${id} order by s.kind, s.name`;
+    const stockOptions = await tx<StockOption[]>`
+      select id, name, kind, qty, price_pln from stock_items
+      where home_id = ${order.home_id} and active and qty > 0
+        and id not in (select stock_item_id from order_items where order_id = ${id})
+      order by kind, name`;
+    return { order, items, tasks, events, resources, sms, orderStock, stockOptions };
   });
   if (!data) notFound();
-  const { order: o, items, tasks, events, resources, sms } = data;
+  const { order: o, items, tasks, events, resources, sms, orderStock, stockOptions } = data;
+  const canEditStock = me.role !== "ekipa";
 
   const h = await headers();
   const origin = process.env.APP_URL ?? `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
@@ -343,6 +357,56 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
                 ? `Mieści się w zasiłku ${formatPln(FUNERAL_BENEFIT_PLN)}; zostaje ${formatPln(FUNERAL_BENEFIT_PLN - (o.total_pln ?? 0))}.`
                 : `Przekracza zasiłek ${formatPln(FUNERAL_BENEFIT_PLN)} o ${formatPln((o.total_pln ?? 0) - FUNERAL_BENEFIT_PLN)}.`}
             </p>
+          </Card>
+
+          <Card>
+            <CardTitle aside={<Link href="/panel/magazyn" className="font-semibold text-brand">Magazyn</Link>}>Trumna, urna i dodatki</CardTitle>
+            {orderStock.length === 0 ? (
+              <p className="text-[15px] text-muted">Nic jeszcze nie wydano z magazynu do tego zlecenia.</p>
+            ) : (
+              <ul className="flex flex-col divide-y divide-line-soft text-[15px]">
+                {orderStock.map((it) => (
+                  <li key={it.stock_item_id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                    <span>
+                      <span className="font-semibold">{it.name}</span>
+                      {it.qty > 1 ? ` × ${it.qty}` : ""}
+                      <span className="block text-[13px] text-muted">{formatPln(it.unit_price_pln * it.qty)} wg magazynu</span>
+                    </span>
+                    {canEditStock ? (
+                      <form action={removeOrderItem}>
+                        <input type="hidden" name="orderId" value={o.id} />
+                        <input type="hidden" name="itemId" value={it.stock_item_id} />
+                        <SubmitButton variant="secondary" pendingLabel="Oddaję…">Oddaj na stan</SubmitButton>
+                      </form>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {canEditStock ? (
+              stockOptions.length === 0 ? (
+                <p className="mt-2 text-[13px] text-muted">Brak produktów na stanie do wydania. Przyjmij dostawę w magazynie.</p>
+              ) : (
+                <form action={assignOrderItem} className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
+                  <input type="hidden" name="orderId" value={o.id} />
+                  <Field id="stock-item" label="Wydaj z magazynu">
+                    <Select id="stock-item" name="itemId" required defaultValue="">
+                      <option value="" disabled>
+                        Wybierz produkt
+                      </option>
+                      {stockOptions.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} · {formatPln(s.price_pln)} · na stanie {s.qty}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <input type="hidden" name="qty" value="1" />
+                  <SubmitButton variant="secondary" pendingLabel="Wydaję…">Wydaj</SubmitButton>
+                </form>
+              )
+            ) : null}
+            <p className="mt-2 text-[13px] text-muted">Wydanie zdejmuje produkt ze stanu. Cena w kosztorysie dla rodziny zostaje wg cennika Ostoi.</p>
           </Card>
 
           <Card>
