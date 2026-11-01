@@ -174,6 +174,13 @@ export const MESSAGES = {
   "zly-ksef": "Numer KSeF ma postać NIP-RRRRMMDD-…, np. 5252445767-20261020-ABC123DEF456.",
   "zly-kod-pocztowy": "Kod pocztowy ma postać 00-000",
   "zly-regon": "REGON ma 9 albo 14 cyfr",
+  // Wniosek o zasiłek
+  "wniosek-ekipa": "Wniosek uzupełnia właściciel albo biuro.",
+  "wniosek-zapisany": "Zapisano dane wniosku.",
+  "wniosek-zgoda": "Wypłata na rachunek zakładu wymaga zgody rodziny z linku.",
+  "pesel-wnioskodawcy": "Sprawdź PESEL osoby, która pokryła koszty.",
+  "pesel-zmarlego": "Sprawdź PESEL osoby zmarłej.",
+  "wniosek-kwota": "Podaj kwotę, którą ZUS ma wypłacić zakładowi.",
   "blad-zapisu": "Nie udało się zapisać. Spróbuj ponownie albo zadzwoń do opiekuna Ostoi.",
 } as const;
 

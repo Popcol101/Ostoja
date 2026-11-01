@@ -11,6 +11,7 @@ import { processOutbox } from "@/lib/notify";
 import { destroySession, requireMember } from "@/lib/session";
 import { encryptSecret, integrationsEnabled } from "@/lib/crypto";
 import { processInvoices } from "@/lib/invoicing/process";
+import { zusClaimSchema } from "@/lib/zus";
 import { STOCK_TEMPLATE, stockEditSchema, stockItemSchema, stockMoveSchema } from "@/lib/stock";
 
 const uuid = z.guid({ message: "Nieprawidłowy identyfikator" });
@@ -647,4 +648,40 @@ export async function updatePayerAddress(formData: FormData) {
     where id = ${p.orderId}`);
   revalidatePath(path);
   back(path, "Zapisano dane.", "ok");
+}
+
+// --- Wniosek o zasiłek pogrzebowy (ZUS Z-12) -------------------------------------------------
+
+export async function saveZusClaim(formData: FormData) {
+  const me = await requireMember();
+  const orderId = String(formData.get("orderId") ?? "");
+  const path = `/panel/zlecenia/${orderId}/zasilek`;
+  if (me.role === "ekipa") back(path, "Wniosek uzupełnia właściciel albo biuro.");
+  const parsed = zusClaimSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) back(path, parsed.error.issues[0]?.message ?? "Sprawdź wpisane dane.");
+  const p = parsed.data;
+  const res = await attempt(() =>
+    withUser(me.userId, async (tx) => {
+      const values = {
+        applicant_pesel: p.applicant_pesel || null,
+        applicant_id_doc: p.applicant_id_doc || null,
+        applicant_relation: p.applicant_relation || null,
+        deceased_pesel: p.deceased_pesel || null,
+        deceased_id_doc: p.deceased_id_doc || null,
+        death_place: p.death_place || null,
+        other_pension_body: p.other_pension_body || null,
+        costs_covered: p.costs_covered,
+        no_other_benefit: p.no_other_benefit === "tak",
+        payout_to_home: p.payout_to_home,
+        payout_home_pln: p.payout_to_home === "czesc" ? p.payout_home_pln : null,
+      };
+      const updated = await tx`update zus_claims set ${tx(values)} where order_id = ${p.orderId} returning order_id`;
+      if (updated.length === 0) {
+        await tx`insert into zus_claims ${tx({ order_id: p.orderId, home_id: me.homeId, ...values })}`;
+      }
+    }),
+  );
+  if (!res.ok) back(path, res.message);
+  revalidatePath(path);
+  back(path, "Zapisano dane wniosku.", "ok");
 }

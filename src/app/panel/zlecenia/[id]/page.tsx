@@ -165,7 +165,7 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
     { label: "Data zgonu", ok: Boolean(o.died_at) },
     { label: "Dane osoby, która pokryła koszty", ok: Boolean(o.principal_name) },
     { label: "Numer konta do wypłaty zasiłku", ok: Boolean(o.zus_bank_account) },
-    { label: "Rachunek za pogrzeb (po podpisaniu umowy)", ok: Boolean(o.contract_signed_at) },
+    { label: "Faktura za pogrzeb", ok: Boolean(invoice && (invoice.status === "wystawiona" || invoice.status === "reczna")) },
   ];
   const zusDone = zusChecklist.filter((c) => c.ok).length;
 
@@ -571,6 +571,9 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
               <LinkButton href={`${path}/kosztorys`} variant="secondary">
                 <FileText size={18} aria-hidden="true" /> Kosztorys dla rodziny
               </LinkButton>
+              <LinkButton href={`${path}/zasilek`} variant="secondary">
+                <FileText size={18} aria-hidden="true" /> Wniosek o zasiłek (ZUS Z-12)
+              </LinkButton>
             </div>
             <div className="mt-4">
               <p className="mb-1 flex justify-between font-semibold">
@@ -593,7 +596,7 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
                 ))}
               </ul>
               <p className="mt-2 text-[13px] text-muted">
-                Wniosek składa zakład w ZUS (osobiście, pocztą lub przez PUE/eZUS). Ostoja przygotowuje komplet danych.
+                Zakład składa wniosek podpisany przez rodzinę w ZUS osobiście albo pocztą. Pełna lista braków jest we wniosku o zasiłek.
               </p>
             </div>
           </Card>
