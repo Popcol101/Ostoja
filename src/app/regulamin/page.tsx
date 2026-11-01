@@ -42,6 +42,14 @@ export default function TermsPage() {
         najbliższego zakładu, najwyżej trzy razy. Potem zadzwoni do Ciebie opiekun Ostoi.
       </p>
 
+      <h2>Opieka nad grobem</h2>
+      <p>
+        Zapalenie znicza, postawienie kwiatów i sprzątanie grobu wykonuje sprawdzony usługodawca współpracujący z Ostoją. Usługę przyjmujemy tylko wtedy,
+        gdy wiadomo, jak dojść do grobu: kwatera i numer z wyszukiwarki grobów cmentarza albo położenie grobu z telefonu. Po każdej wizycie usługodawca
+        dodaje zdjęcie grobu – zobaczysz je pod linkiem z e-maila. Usługodawca widzi dane grobu i Twoje imię, ale nie Twój e-mail ani telefon.
+        Zlecenie stałe możesz zakończyć w każdej chwili [sposób rezygnacji i zwroty – DO UZUPEŁNIENIA przed uruchomieniem płatności].
+      </p>
+
       <h2>Reklamacje</h2>
       <p>
         Uwagi do działania serwisu zgłoś opiekunowi: {OPIEKUN_PHONE} albo [e-mail – DO UZUPEŁNIENIA]. Odpowiemy w ciągu 14 dni. Reklamacje usług

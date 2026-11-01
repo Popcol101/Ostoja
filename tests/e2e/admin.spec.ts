@@ -102,7 +102,9 @@ test("zapytania do opiekuna i rozliczenia", async ({ page }) => {
   }
   await expect(page.getByText("Obsłużone w ostatnim tygodniu")).toBeVisible();
 
-  await page.goto("/admin/rozliczenia");
+  // Miesiąc umowy z seeda (sprzed doby) – test nie zależy od tego, czy biegnie 1. dnia miesiąca.
+  const month = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Warsaw" }).format(new Date(Date.now() - 864e5)).slice(0, 7);
+  await page.goto(`/admin/rozliczenia?miesiac=${month}`);
   await expect(page.getByRole("cell", { name: "Dom Pogrzebowy Cisza" })).toBeVisible();
 });
 

@@ -63,5 +63,7 @@ export async function acceptInvitation(formData: FormData) {
     throw error;
   }
   await createSession(userId!);
-  redirect(withMessage("/panel/zapytania", "ok", auth && admin ? "Witaj w panelu Ostoi. Logujesz się tym adresem e-mail i hasłem." : "Witaj w panelu Ostoi."));
+  const [dest] = await asServer((tx) => tx<{ d: string | null }[]>`select login_destination(${userId!}) as d`);
+  const home = dest?.d === "uslugi" ? "/uslugi" : "/panel/zapytania";
+  redirect(withMessage(home, "ok", auth && admin ? "Witaj w panelu Ostoi. Logujesz się tym adresem e-mail i hasłem." : "Witaj w panelu Ostoi."));
 }

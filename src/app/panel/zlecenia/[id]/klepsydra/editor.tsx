@@ -21,12 +21,14 @@ export function ObituaryEditor({
   initial,
   orderCeremony,
   canEdit,
+  suggestions = { ceremony: [], cemetery: [] },
 }: {
   orderId: string;
   base: Base;
   initial: ObituaryFields;
   orderCeremony: "religijna" | "swiecka" | "bez";
   canEdit: boolean;
+  suggestions?: { ceremony: string[]; cemetery: string[] };
 }) {
   const [f, setF] = useState<ObituaryFields>(initial);
   const set = <K extends keyof ObituaryFields>(k: K, v: ObituaryFields[K]) => setF((x) => ({ ...x, [k]: v }));
@@ -170,11 +172,21 @@ export function ObituaryEditor({
                 label={religious ? "Gdzie Msza Święta – tak jak w zdaniu" : "Gdzie pożegnanie – tak jak w zdaniu"}
                 hint={religious ? "Np. „w kościele pw. św. Anny w Łodzi”. Termin bierzemy z kalendarza zlecenia." : "Np. „w sali pożegnań przy ul. Ogrodowej 5 w Łodzi”. Termin z kalendarza zlecenia."}
               >
-                <Input id="ceremony_place" name="ceremony_place" maxLength={160} autoComplete="off" aria-describedby="ceremony_place-hint" {...text("ceremony_place")} />
+                <Input id="ceremony_place" name="ceremony_place" maxLength={160} autoComplete="off" list="parafie" aria-describedby="ceremony_place-hint" {...text("ceremony_place")} />
+                <datalist id="parafie">
+                  {suggestions.ceremony.map((x) => (
+                    <option key={x} value={x} />
+                  ))}
+                </datalist>
               </Field>
             ) : null}
             <Field id="cemetery_place" label="Miejsce pochówku – tak jak w zdaniu" hint="Np. „na cmentarzu parafialnym przy ul. Ogrodowej w Łodzi”.">
-              <Input id="cemetery_place" name="cemetery_place" maxLength={160} autoComplete="off" aria-describedby="cemetery_place-hint" {...text("cemetery_place")} />
+              <Input id="cemetery_place" name="cemetery_place" maxLength={160} autoComplete="off" list="cmentarze" aria-describedby="cemetery_place-hint" {...text("cemetery_place")} />
+              <datalist id="cmentarze">
+                {suggestions.cemetery.map((x) => (
+                  <option key={x} value={x} />
+                ))}
+              </datalist>
             </Field>
           </>
         ) : null}

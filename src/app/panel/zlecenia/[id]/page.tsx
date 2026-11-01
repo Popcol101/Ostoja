@@ -24,6 +24,7 @@ import {
   type OrderStage,
 } from "@/lib/labels";
 import { requireMember } from "@/lib/session";
+import { placeSuggestions } from "@/lib/places";
 import { assignOrderItem, manualInvoice, publishMemorial, removeOrderItem, requestInvoice, sendFamilySms, updatePayerAddress, setEventStatus, setStage, signContract, toggleTask, updateOrderDetails } from "../../actions";
 import { EventForm, type Resource } from "../../event-form";
 
@@ -110,6 +111,7 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const me = await requireMember();
+  const places = await placeSuggestions(me.userId, me.homeId);
 
   const data = await withUser(me.userId, async (tx) => {
     const [order] = await tx<Order[]>`select * from orders where id = ${id}`;
@@ -352,7 +354,7 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
             )}
             <details className="mt-3 rounded-[10px] border border-line px-3 py-2">
               <summary className="min-h-11 cursor-pointer py-2.5 font-semibold text-brand">Dodaj termin</summary>
-              <EventForm orderId={o.id} returnTo={path} resources={resources} />
+              <EventForm orderId={o.id} returnTo={path} resources={resources} places={places.names} />
             </details>
           </Card>
         </div>

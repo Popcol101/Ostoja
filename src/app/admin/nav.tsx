@@ -1,5 +1,5 @@
 "use client";
-import { Bug, Building2, PhoneCall, Receipt, Scale, ShieldCheck, Star } from "lucide-react";
+import { Bug, Building2, Flower2, PhoneCall, Receipt, Scale, ShieldCheck, Star } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -8,6 +8,7 @@ const items = [
   { href: "/admin/zapytania", label: "Do opiekuna", icon: PhoneCall, match: (p: string) => p.startsWith("/admin/zapytania") },
   { href: "/admin/odwolania", label: "Odwołania", icon: Scale, match: (p: string) => p.startsWith("/admin/odwolania") },
   { href: "/admin/rozliczenia", label: "Rozliczenia", icon: Receipt, match: (p: string) => p.startsWith("/admin/rozliczenia") },
+  { href: "/admin/uslugodawcy", label: "Usługodawcy", icon: Flower2, match: (p: string) => p.startsWith("/admin/uslugodawcy") },
   { href: "/admin/oceny", label: "Oceny", icon: Star, match: (p: string) => p.startsWith("/admin/oceny") },
   { href: "/admin/rodo", label: "Wnioski RODO", icon: ShieldCheck, match: (p: string) => p.startsWith("/admin/rodo") },
   { href: "/admin/bledy", label: "Błędy", icon: Bug, match: (p: string) => p.startsWith("/admin/bledy") },

@@ -43,6 +43,7 @@ export default defineConfig({
         PWNED_CHECK: "off",
         INTEGRATIONS_KEY: "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=",
         FAKTUROWNIA_BASE_URL: "http://127.0.0.1:54399/fakturownia",
+        GRAVE_PAYMENTS: "test",
       },
     },
   ],

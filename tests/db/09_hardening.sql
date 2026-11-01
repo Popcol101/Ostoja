@@ -21,7 +21,8 @@ begin
   where n.nspname = 'public' and p.prosecdef and has_function_privilege('anon', p.oid, 'execute')
     and p.proname not in ('search_homes', 'home_price_list', 'family_get_order', 'family_update_order',
                           'public_memorial', 'invitation_preview', 'public_obituary',
-                          'family_review', 'family_submit_review');
+                          'family_review', 'family_submit_review',
+                          'grave_care_cemeteries', 'grave_quote', 'grave_order_by_token', 'grave_visit_photo');
   assert extra is null, 'anon ma dostęp do: ' || coalesce(extra, '');
 end $$;
 

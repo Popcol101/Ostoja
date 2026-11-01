@@ -102,6 +102,24 @@ Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, pan
   zostało zablokowane jako zmiana produkcyjna); uruchomić uzupelnienie-2026-10-16.sql (pg_net ze schematu public);
   w Supabase Auth włączyć ochronę przed hasłami z wycieków i Minimum password length = 12.
 
+### Oceny, magazyn, faktury, wniosek Z-12, opieka nad grobem (1.11.2026)
+| Obszar | Pliki | Stan |
+| --- | --- | --- |
+| Oceny od rodzin | migracja 20261101000100, src/components/review-form.tsx, /r/[token]#ocena, /panel/profil, /admin/oceny | ocena 1–5 z linku rodziny po ceremonii/pochówku (bez konta), średnia i liczba w funeral_homes liczone triggerem, komentarz tylko dla zakładu i Ostoi, ukrywanie z powodem (dziennik), opis w regulaminie (Omnibus) |
+| Magazyn trumien i urn | migracja 20261101000200, src/lib/stock.ts, /panel/magazyn, karta zlecenia | stany, minimum i „Do zamówienia”, dostawa, korekta z powodem, wydanie do zlecenia (cena kopiowana), zwrot, historia ruchów, podstawowy asortyment (ceny przykładowe) |
+| Faktury | migracja 20261101000300, src/lib/crypto.ts, src/lib/invoicing/, /api/faktury, profil, karta zlecenia | Fakturownia: klucz API szyfrowany AES-256-GCM (INTEGRATIONS_KEY, aad = zakład), kolumny z kluczem nie odczyta rola authenticated; faktura po oznaczeniu umowy (kolejka, claim z blokadą, wywołanie API poza transakcją, 5 prób), KSeF wysyła program (B2C opcjonalnie), numer KSeF dociągany; faktura ręczna z numerem KSeF; adres płacącego (zakład albo rodzina z linku), REGON i rachunek zakładu |
+| Wniosek o zasiłek (Z-12) | migracja 20261101000400, src/lib/zus.ts, /panel/zlecenia/[id]/zasilek | treść wg § 4 ust. 2a rozporządzenia (Dz.U. 2025 poz. 1888), PESEL z sumą kontrolną, upoważnienie zakładu tylko za zgodą rodziny, faktura (numer KSeF + QR) w załącznikach, termin 12 miesięcy, lista braków, wydruk A4 |
+| Opieka nad grobem | migracje 20261101000500 i 600, src/lib/grave.ts, /groby, /usluga/[token], /uslugi, /admin/uslugodawcy, docs/cmentarze-wyszukiwarki.md | baza cmentarzy (23 z wyszukiwarką) i parafii (podpowiedzi w klepsydrze i kalendarzu), konta usługodawców (zaproszenia jak w zakładach, logowanie → /uslugi), cennik: znicz 40 zł + znicze (od 10 zł), kwiaty 40 zł + kwiaty, sprzątanie 60 zł; zamówienie tylko, gdy da się dojść do grobu (wyszukiwarka + kwatera i numer albo GPS) i jest usługodawca; jednorazowo, co tydzień, co miesiąc, przed świętami; płatność testowa (GRAVE_PAYMENTS=test), e-mail z linkiem; wizyta zamykana zdjęciem (zmniejszane w przeglądarce, sprawdzana sygnatura pliku), następna wizyta planuje się sama |
+
+Testy: `npm run test:db` 19/19, `npm test` 85, `npm run e2e` 58/58 (390 i 1280 px). Zrzuty 50–63 w docs/zrzuty/.
+Poprawione testy zależne od daty (1. dzień miesiąca): 07_admin.sql i admin.spec.ts.
+
+**Do zrobienia przez właściciela:** wgrać migracje 20261101000100–600 w SQL Editor (Supabase); w Vercel ustawić INTEGRATIONS_KEY
+(`openssl rand -base64 32`, Sensitive) i na wersji testowej GRAVE_PAYMENTS=test; harmonogram co 5 minut dla /api/faktury (jak /api/powiadomienia).
+Przed prawdziwymi płatnościami: umowa z Przelewy24 albo Stripe, regulamin usługi (rezygnacja, zwroty), rozliczenia z usługodawcami.
+Do decyzji: oficjalny PDF Z-12 z 2026 r. (wypełnianie pól formularza), kolejne programy do faktur (inFakt, wFirma, iFirma),
+zdjęcia w Supabase Storage zamiast w bazie, retencja nieopłaconych zamówień i zamówień w wnioskach RODO.
+
 ### Decyzje i znane ograniczenia
 - Komunikaty po akcjach: w adresie tylko kod (`?ok=umowa-podpisana`), teksty w src/lib/messages.ts.
 - Bez `loading.tsx`: w Next.js 15.5 granica ładowania gubi przekierowanie po akcji serwerowej (wykryte w E2E).

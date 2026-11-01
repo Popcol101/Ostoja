@@ -7,9 +7,16 @@ import { inviteLink } from "./team";
 
 export type InvitationDelivery = "wyslane" | "bez-poczty" | "blad";
 
-export async function deliverInvitation(i: { token: string; email: string; name: string; role: string; homeName: string }): Promise<InvitationDelivery> {
+export async function deliverInvitation(i: {
+  token: string;
+  email: string;
+  name: string;
+  role: string;
+  homeName: string;
+  org?: "zaklad" | "uslugodawca";
+}): Promise<InvitationDelivery> {
   const cfg = mailConfig();
   if (!cfg) return "bez-poczty";
-  const m = invitationEmail({ name: i.name, homeName: i.homeName, role: i.role, link: inviteLink(i.token) });
+  const m = invitationEmail({ name: i.name, homeName: i.homeName, role: i.role, link: inviteLink(i.token), org: i.org });
   return (await sendMail({ to: i.email, ...m, kind: "zaproszenie" }, cfg)) ? "wyslane" : "blad";
 }

@@ -11,6 +11,7 @@ import { loadPanelObituary } from "@/lib/obituary-data";
 import { requireMember } from "@/lib/session";
 import { publishObituary } from "../../../actions";
 import { ObituaryEditor } from "./editor";
+import { placeSuggestions } from "@/lib/places";
 
 export const metadata: Metadata = { title: "Klepsydra" };
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ export default async function KlepsydraPage({ params, searchParams }: { params: 
   const me = await requireMember();
   const data = await loadPanelObituary(me.userId, id);
   if (!data) notFound();
+  const places = await placeSuggestions(me.userId, me.homeId);
   const canEdit = me.role !== "ekipa";
   const h = await headers();
   const origin = process.env.APP_URL ?? `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
@@ -58,6 +60,7 @@ export default async function KlepsydraPage({ params, searchParams }: { params: 
         initial={data.fields}
         orderCeremony={data.orderCeremony}
         canEdit={canEdit}
+        suggestions={{ ceremony: places.ceremony, cemetery: places.cemetery }}
       />
 
       <Card className="print:hidden">

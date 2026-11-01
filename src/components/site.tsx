@@ -72,6 +72,7 @@ export function SiteFooter() {
         </div>
         <nav aria-label="Stopka" className="flex flex-wrap items-start gap-x-6 gap-y-2">
           <Link href="/#zasady" className="text-night-text">Zasady</Link>
+          <Link href="/groby" className="text-night-text">Opieka nad grobem</Link>
           <Link href="/regulamin" className="text-night-text">Regulamin</Link>
           <Link href="/prywatnosc" className="text-night-text">Prywatność</Link>
           <Link href="/regulamin-partnera" className="text-night-text">Dla zakładów</Link>

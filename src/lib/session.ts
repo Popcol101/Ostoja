@@ -91,3 +91,17 @@ export async function requireAdmin(): Promise<Admin> {
   if (!row?.name) redirect("/logowanie?blad=brak-uprawnien-admina");
   return { userId, displayName: row.name };
 }
+
+export type ProviderSession = { userId: string; providerId: string; providerName: string; role: "wlasciciel" | "pracownik"; displayName: string };
+
+/** Sesja usługodawcy (opieka nad grobami); bez członkostwa przekierowuje na logowanie. */
+export async function requireProvider(): Promise<ProviderSession> {
+  const userId = await getUserId();
+  if (!userId) redirect("/logowanie");
+  const [row] = await withUser(userId, (tx) => tx<{ provider_id: string; name: string; role: ProviderSession["role"]; display_name: string }[]>`
+    select m.provider_id, p.name, m.role, m.display_name
+    from provider_members m join providers p on p.id = m.provider_id
+    where m.user_id = ${userId} limit 1`);
+  if (!row) redirect("/logowanie?blad=brak-zakladu");
+  return { userId, providerId: row.provider_id, providerName: row.name, role: row.role, displayName: row.display_name };
+}

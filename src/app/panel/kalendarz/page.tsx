@@ -7,6 +7,7 @@ import { withUser } from "@/lib/db";
 import { addDays, countLabel, dayKey, formatDate, formatTime, mondayOf, warsawToUtc } from "@/lib/format";
 import { EVENT_KIND_LABEL, EVENT_STATUS_LABEL, type EventKind, type EventStatus } from "@/lib/labels";
 import { requireMember } from "@/lib/session";
+import { placeSuggestions } from "@/lib/places";
 import { EventForm, type Resource } from "../event-form";
 
 export const metadata: Metadata = { title: "Kalendarz" };
@@ -28,6 +29,7 @@ type Duty = { name: string; starts_at: Date; ends_at: Date };
 
 export default async function CalendarPage({ searchParams }: { searchParams: SearchParams }) {
   const me = await requireMember();
+  const places = await placeSuggestions(me.userId, me.homeId);
   const today = dayKey(new Date());
   const requested = await param(searchParams, "od");
   const monday = mondayOf(requested && /^\d{4}-\d{2}-\d{2}$/.test(requested) ? requested : today);
@@ -197,7 +199,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
         <Card>
           <CardTitle>Wpis ręczny</CardTitle>
           <p className="text-[14px] text-muted">Spotkania, dostawy i zlecenia spoza Ostoi. Terminy zleceń dodajesz w karcie zlecenia.</p>
-          <EventForm returnTo="/panel/kalendarz" resources={resources} />
+          <EventForm returnTo="/panel/kalendarz" resources={resources} places={places.names} />
           <p className="mt-3 border-t border-line-soft pt-3 text-[14px]">
             <a href="/api/kalendarz" className="font-semibold text-brand">
               Pobierz kalendarz (.ics)

@@ -28,6 +28,7 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-4000-8000-000000000003', 'adam@cisza.test',     '{"name":"Adam Sowiński"}'),
   ('00000000-0000-4000-8000-000000000004', 'piotr@podlipami.test','{"name":"Piotr Lipski"}'),
   ('00000000-0000-4000-8000-000000000005', 'kasia@kalina.test',   '{"name":"Katarzyna Kalinowska"}'),
+  ('00000000-0000-4000-8000-00000000000a', 'marek@spokoj.test',   '{"name":"Marek Spokojny"}'),
   ('00000000-0000-4000-8000-000000000009', 'ola@ostoja.test',     '{"name":"Ola Maj"}')
 on conflict (id) do nothing; -- reset wersji testowej zostawia konta w auth.users
 
@@ -233,3 +234,23 @@ insert into stock_items (id, home_id, kind, name, material, supplier, price_pln,
   ('00000000-0000-4000-c100-000000000005', '00000000-0000-4000-a000-000000000001', 'urna', 'Urna metalowa', 'stal malowana proszkowo', 'Dostawca testowy', 700, 0, 1),
   ('00000000-0000-4000-c100-000000000006', '00000000-0000-4000-a000-000000000001', 'urna', 'Urna biodegradowalna', 'papier i włókna roślinne', 'Dostawca testowy', 350, 3, 1)
 on conflict (id) do nothing;
+
+-- Opieka nad grobem (dane testowe): parafie w Łodzi, cmentarz bez wyszukiwarki, usługodawca z kontem.
+insert into parishes (id, name, city, address, phrase, source) values
+  ('00000000-0000-4000-c200-000000000001', 'Parafia testowa pw. św. Anny', 'Łódź', 'ul. Przykładowa 1', 'w kościele pw. św. Anny w Łodzi', 'test'),
+  ('00000000-0000-4000-c200-000000000002', 'Parafia testowa pw. Najświętszego Serca Pana Jezusa', 'Łódź', 'ul. Przykładowa 5', 'w kościele pw. Najświętszego Serca Pana Jezusa w Łodzi', 'test'),
+  ('00000000-0000-4000-c200-000000000003', 'Parafia testowa pw. św. Józefa', 'Łódź', 'ul. Przykładowa 9', 'w kościele pw. św. Józefa w Łodzi', 'test')
+on conflict (id) do nothing;
+insert into cemeteries (id, name, city, kind, parish_id, locator, phrase, source) values
+  ('00000000-0000-4000-c300-000000000001', 'Cmentarz parafialny testowy przy ul. Przykładowej', 'Łódź', 'parafialny',
+   '00000000-0000-4000-c200-000000000001', 'brak', 'na cmentarzu parafialnym przy ul. Przykładowej w Łodzi', 'test')
+on conflict (id) do nothing;
+insert into providers (id, name, nip, phone, email, city, verified_at) values
+  ('00000000-0000-4000-c400-000000000001', 'Spokój – opieka nad grobami (test)', '7270000099', '+48 600 300 400', 'kontakt@spokoj.test', 'Łódź', now())
+on conflict (id) do nothing;
+insert into provider_members (user_id, provider_id, role, display_name) values
+  ('00000000-0000-4000-8000-00000000000a', '00000000-0000-4000-c400-000000000001', 'wlasciciel', 'Marek Spokojny')
+on conflict do nothing;
+insert into provider_cemeteries (provider_id, cemetery_id)
+select '00000000-0000-4000-c400-000000000001', id from cemeteries where city = 'Łódź'
+on conflict do nothing;

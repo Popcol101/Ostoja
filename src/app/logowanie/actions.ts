@@ -16,9 +16,9 @@ import { createSession, demoModeEnabled } from "@/lib/session";
 const back = (kind: "ok" | "blad", text: string, path = "/logowanie"): never => redirect(withMessage(path, kind, text), RedirectType.replace);
 
 /** Dokąd wpuścić konto: panel zakładu (członkostwo), panel administratora albo nigdzie. */
-async function destination(userId: string): Promise<"/panel/zapytania" | "/admin" | null> {
+async function destination(userId: string): Promise<"/panel/zapytania" | "/uslugi" | "/admin" | null> {
   const [row] = await asServer((tx) => tx<{ d: string | null }[]>`select login_destination(${userId}) as d`);
-  return row?.d === "panel" ? "/panel/zapytania" : row?.d === "admin" ? "/admin" : null;
+  return row?.d === "panel" ? "/panel/zapytania" : row?.d === "uslugi" ? "/uslugi" : row?.d === "admin" ? "/admin" : null;
 }
 
 const loginSchema = z.object({

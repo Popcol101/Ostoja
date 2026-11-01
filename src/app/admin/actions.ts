@@ -169,3 +169,64 @@ export async function setReviewHidden(formData: FormData) {
   revalidatePath(PATH);
   back(PATH, "ok", hide ? "Ocena ukryta. Nie liczy się do średniej zakładu." : "Ocena przywrócona.");
 }
+
+// --- Usługodawcy (opieka nad grobami) -----------------------------------------------------------
+
+const providerSchema = z.object({
+  name: z.string().trim().min(3, { message: "Podaj nazwę zakładu" }).max(120),
+  nip: z.string().transform((v) => v.replace(/\D/g, "")).pipe(z.string().length(10, { message: "NIP ma 10 cyfr" })),
+  phone: z.string().trim().regex(/^\+?[0-9 ]{9,16}$/, { message: "Podaj poprawny numer telefonu" }),
+  email: z.string().trim().toLowerCase().pipe(z.email({ message: "Podaj poprawny e-mail" })),
+  city: z.string().trim().min(2, { message: "Podaj adres" }).max(80),
+});
+
+export async function createProvider(formData: FormData) {
+  const admin = await requireAdmin();
+  const PATH = "/admin/uslugodawcy";
+  const parsed = providerSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) back(PATH, "blad", parsed.error.issues[0]?.message ?? "Sprawdź wpisane dane.");
+  await attempt(PATH, () => withUser(admin.userId, (tx) => tx`select admin_create_provider(${tx.json(parsed.data!)})`));
+  revalidatePath(PATH);
+  back(PATH, "ok", "Usługodawca dodany. Zaznacz cmentarze, zweryfikuj i zaproś właściciela.");
+}
+
+export async function updateProvider(formData: FormData) {
+  const admin = await requireAdmin();
+  const PATH = "/admin/uslugodawcy";
+  const id = z.guid().parse(formData.get("providerId"));
+  const cemeteries = formData.getAll("cemetery").map((c) => z.guid().parse(String(c)));
+  const verified = formData.get("verified") === "tak";
+  await attempt(PATH, () => withUser(admin.userId, (tx) => tx`select admin_update_provider(${id}, ${verified}, ${cemeteries}::uuid[])`));
+  revalidatePath(PATH);
+  back(PATH, "ok", "Zapisano usługodawcę.");
+}
+
+export async function inviteProvider(formData: FormData) {
+  const admin = await requireAdmin();
+  const PATH = "/admin/uslugodawcy";
+  const parsed = z
+    .object({
+      providerId: z.guid(),
+      providerName: z.string().max(120),
+      email: z.string().trim().toLowerCase().pipe(z.email({ message: "Podaj poprawny e-mail" })),
+      display_name: z.string().trim().min(2, { message: "Podaj imię i nazwisko" }).max(120),
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) back(PATH, "blad", parsed.error.issues[0]?.message ?? "Sprawdź wpisane dane.");
+  const d = parsed.data!;
+  const [row] = await attempt(PATH, () =>
+    withUser(admin.userId, (tx) => tx<{ token: string }[]>`select admin_invite_provider(${d.providerId}, ${d.email}, ${d.display_name}) as token`),
+  );
+  const delivery = await deliverInvitation({ token: row.token, email: d.email, name: d.display_name, role: "wlasciciel", homeName: d.providerName, org: "uslugodawca" });
+  if (delivery === "bez-poczty") {
+    (await cookies()).set(INVITE_COOKIE, JSON.stringify({ token: row.token, name: d.display_name, email: d.email }), {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+      path: PATH,
+      maxAge: 15 * 60,
+    });
+    back(PATH, "ok", "Zaproszenie gotowe. Wyślij link tej osobie – działa 7 dni.");
+  }
+  back(PATH, delivery === "wyslane" ? "ok" : "blad", delivery === "wyslane" ? "Zaproszenie wysłane e-mailem. Link do ustawienia hasła działa 7 dni." : "Nie udało się wysłać e-maila z zaproszeniem. Spróbuj ponownie za chwilę.");
+}

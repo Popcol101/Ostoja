@@ -20,7 +20,7 @@ function layout(paragraphs: string[], button: { href: string; label: string }, f
 </div>`;
 }
 
-export type InvitationEmailInput = { name: string; homeName: string; role: string; link: string };
+export type InvitationEmailInput = { name: string; homeName: string; role: string; link: string; org?: "zaklad" | "uslugodawca" };
 
 export function invitationEmail(i: InvitationEmailInput): { subject: string; html: string; text: string } {
   const role = ROLE_LABEL[i.role] ?? i.role;
@@ -28,7 +28,9 @@ export function invitationEmail(i: InvitationEmailInput): { subject: string; htm
   const html = layout(
     [
       `Dzień dobry ${esc(i.name)},`,
-      `masz zaproszenie do panelu zakładu <strong>${esc(i.homeName)}</strong> w Ostoi (rola: ${esc(role)}).`,
+      i.org === "uslugodawca"
+        ? `masz zaproszenie do panelu usługodawcy <strong>${esc(i.homeName)}</strong> w Ostoi (opieka nad grobami).`
+        : `masz zaproszenie do panelu zakładu <strong>${esc(i.homeName)}</strong> w Ostoi (rola: ${esc(role)}).`,
       "Kliknij przycisk i ustaw hasło. Potem logujesz się tym adresem e-mail i hasłem. Link działa 7 dni i tylko raz.",
     ],
     { href: i.link, label: "Ustaw hasło i dołącz" },
@@ -37,7 +39,9 @@ export function invitationEmail(i: InvitationEmailInput): { subject: string; htm
   const text = [
     `Dzień dobry ${i.name},`,
     "",
-    `masz zaproszenie do panelu zakładu ${i.homeName} w Ostoi (rola: ${role}).`,
+    i.org === "uslugodawca"
+      ? `masz zaproszenie do panelu usługodawcy ${i.homeName} w Ostoi (opieka nad grobami).`
+      : `masz zaproszenie do panelu zakładu ${i.homeName} w Ostoi (rola: ${role}).`,
     "Otwórz link i ustaw hasło. Potem logujesz się tym adresem e-mail i hasłem. Link działa 7 dni i tylko raz.",
     "",
     i.link,
@@ -64,4 +68,26 @@ export function passwordEmail(link: string): { subject: string; html: string; te
     "Jeśli to nie Ty, zignoruj tę wiadomość – hasło się nie zmieni.",
   ].join("\n");
   return { subject, html, text };
+}
+
+export type GraveOrderEmailInput = { name: string; deceased: string; cemetery: string; total: string; firstOn: string; frequency: string; link: string };
+
+export function graveOrderEmail(i: GraveOrderEmailInput): { subject: string; html: string; text: string } {
+  const subject = `Potwierdzenie zamówienia – opieka nad grobem (${i.deceased})`;
+  const lines = [
+    `Dzień dobry ${i.name},`,
+    `dziękujemy za zamówienie opieki nad grobem: ${i.deceased}, ${i.cemetery}.`,
+    `Pierwsza wizyta: ${i.firstOn}. Częstotliwość: ${i.frequency}. Zapłacono: ${i.total}.`,
+    "Po każdej wizycie dodamy zdjęcie grobu. Zobaczysz je pod linkiem poniżej – zachowaj tę wiadomość.",
+  ];
+  const html = layout(lines.map(esc), { href: i.link, label: "Zobacz zamówienie i zdjęcia" }, "Link jest tylko dla Ciebie. Nie udostępniaj go publicznie.");
+  const text = [...lines, "", i.link].join("\n");
+  return { subject, html, text };
+}
+
+export function graveVisitEmail(i: { name: string; deceased: string; link: string }): { subject: string; html: string; text: string } {
+  const subject = `Wizyta przy grobie wykonana – ${i.deceased}`;
+  const lines = [`Dzień dobry ${i.name},`, `byliśmy przy grobie: ${i.deceased}. Zdjęcie po wizycie jest już pod Twoim linkiem.`];
+  const html = layout(lines.map(esc), { href: i.link, label: "Zobacz zdjęcie" }, "Link jest tylko dla Ciebie. Nie udostępniaj go publicznie.");
+  return { subject, html, text: [...lines, "", i.link].join("\n") };
 }

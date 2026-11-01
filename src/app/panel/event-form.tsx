@@ -5,7 +5,7 @@ import { addEvent } from "./actions";
 
 export type Resource = { id: string; name: string };
 
-export function EventForm({ orderId, returnTo, resources }: { orderId?: string; returnTo: string; resources: Resource[] }) {
+export function EventForm({ orderId, returnTo, resources, places = [] }: { orderId?: string; returnTo: string; resources: Resource[]; places?: string[] }) {
   return (
     <form action={addEvent} className="mt-2 grid gap-3 pb-2 sm:grid-cols-2">
       <input type="hidden" name="orderId" value={orderId ?? ""} />
@@ -37,7 +37,12 @@ export function EventForm({ orderId, returnTo, resources }: { orderId?: string; 
         </Field>
       </div>
       <Field label="Miejsce" id={`p-${orderId ?? "x"}`}>
-        <Input id={`p-${orderId ?? "x"}`} name="place" placeholder="np. kaplica cmentarza komunalnego" />
+        <Input id={`p-${orderId ?? "x"}`} name="place" placeholder="np. kaplica cmentarza komunalnego" list={`miejsca-${orderId ?? "x"}`} autoComplete="off" />
+        <datalist id={`miejsca-${orderId ?? "x"}`}>
+          {places.map((x) => (
+            <option key={x} value={x} />
+          ))}
+        </datalist>
       </Field>
       <Field label="Karawan lub sala" id={`r-${orderId ?? "x"}`}>
         <Select id={`r-${orderId ?? "x"}`} name="resourceId" defaultValue="">

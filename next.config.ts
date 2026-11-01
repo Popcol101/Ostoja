@@ -13,6 +13,8 @@ const security = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Zdjęcie grobu z panelu usługodawcy (po zmniejszeniu w przeglądarce ok. 300 KB; bez JS do 3 MB).
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
   // Kroje do obrazu podglądu klepsydry (next/og czyta pliki z dysku – Vercel musi je dołączyć do funkcji).
   outputFileTracingIncludes: {
     "/klepsydra/[slug]/opengraph-image": ["./node_modules/@fontsource/newsreader/files/newsreader-latin*-{500,600}-*.woff"],
@@ -21,6 +23,9 @@ const nextConfig: NextConfig = {
     const headers = [
       { source: "/:path*", headers: security },
       { source: "/r/:token*", headers: [{ key: "Referrer-Policy", value: "no-referrer" }, { key: "Cache-Control", value: "no-store" }] },
+      { source: "/usluga/:token*", headers: [{ key: "Referrer-Policy", value: "no-referrer" }, { key: "Cache-Control", value: "no-store" }] },
+      // „Jestem przy grobie” – położenie z telefonu tylko na stronie zamówienia opieki nad grobem.
+      { source: "/groby", headers: [{ key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self), payment=()" }] },
       { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache" }, { key: "Service-Worker-Allowed", value: "/" }] },
     ];
     // Wersja testowa nie trafia do wyszukiwarek (ALLOW_INDEXING=true tylko na produkcji).

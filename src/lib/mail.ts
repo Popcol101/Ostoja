@@ -27,7 +27,7 @@ export type Mail = {
   html: string;
   text: string;
   /** Rodzaj wiadomości – trafia do Brevo jako tag i do logów zamiast adresu. */
-  kind: "zaproszenie" | "haslo";
+  kind: "zaproszenie" | "haslo" | "opieka";
 };
 
 export async function sendMail(mail: Mail, cfg: MailConfig, fetcher: typeof fetch = fetch): Promise<boolean> {
