@@ -114,8 +114,8 @@ Konto administratora testowego: ola@ostoja.test (Ola Maj) – na /logowanie, pan
 Testy: `npm run test:db` 19/19, `npm test` 85, `npm run e2e` 58/58 (390 i 1280 px). Zrzuty 50–63 w docs/zrzuty/.
 Poprawione testy zależne od daty (1. dzień miesiąca): 07_admin.sql i admin.spec.ts.
 
-**Do zrobienia przez właściciela:** wgrać migracje 20261101000100–600 w SQL Editor (Supabase); w Vercel ustawić INTEGRATIONS_KEY
-(`openssl rand -base64 32`, Sensitive) i na wersji testowej GRAVE_PAYMENTS=test; harmonogram co 5 minut dla /api/faktury (jak /api/powiadomienia).
+**Wdrożone 1.11.2026:** właściciel uruchomił scripts/supabase/wdrozenie-2026-11-01.sql w SQL Editor (migracje 20261018000100 i
+20261101000100–600 + harmonogram ostoja-faktury co 5 minut) i ustawił w Vercel INTEGRATIONS_KEY oraz GRAVE_PAYMENTS=test (Sensitive).
 Przed prawdziwymi płatnościami: umowa z Przelewy24 albo Stripe, regulamin usługi (rezygnacja, zwroty), rozliczenia z usługodawcami.
 Do decyzji: oficjalny PDF Z-12 z 2026 r. (wypełnianie pól formularza), kolejne programy do faktur (inFakt, wFirma, iFirma),
 zdjęcia w Supabase Storage zamiast w bazie, retencja nieopłaconych zamówień i zamówień w wnioskach RODO.
